@@ -1,0 +1,951 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物語工房</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@200;300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #14110D;
+  --bg2:   #1A1610;
+  --bg3:   #201B13;
+  --sf:    #27211A;
+  --sf2:   #302820;
+  --bd:    #38302A;
+  --bd2:   #4A3C30;
+  --tx:    #EDE8DF;
+  --tx2:   #A89880;
+  --tx3:   #6A5C4E;
+  --tx4:   #3A3028;
+  --am:    #C8893A;
+  --am2:   #E0A050;
+  --am-bg: rgba(200,137,58,.09);
+  --am-bd: rgba(200,137,58,.22);
+  --red:   #B85858;
+  --red-bg:rgba(184,88,88,.1);
+  --grn:   #5A8C6A;
+  --grn-bg:rgba(90,140,106,.1);
+  --r:8px; --rl:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--tx);overflow-x:hidden;}
+
+/* ── SCREENS ── */
+.screen{display:none;min-height:100vh;}
+.screen.active{display:flex;flex-direction:column;animation:fadeUp .3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── TOAST ── */
+.toast{position:fixed;top:18px;left:50%;transform:translateX(-50%) translateY(-6px);background:var(--sf2);border:1px solid var(--bd2);color:var(--tx2);padding:8px 20px;border-radius:20px;font-size:12px;z-index:9999;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* ── PROGRESS BAR ── */
+.progress-bar{height:2px;background:var(--bd);position:relative;}
+.progress-fill{height:100%;background:var(--am);transition:width .5s ease;border-radius:0 2px 2px 0;}
+
+/* ── STEP INDICATOR ── */
+.step-indicator{display:flex;align-items:center;justify-content:center;gap:0;padding:24px 0 0;}
+.si-item{display:flex;align-items:center;gap:0;}
+.si-dot{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;transition:all .3s;flex-shrink:0;}
+.si-dot.done{background:var(--am);color:#1A1208;}
+.si-dot.active{background:var(--tx);color:var(--bg);font-weight:700;}
+.si-dot.inactive{background:var(--sf2);color:var(--tx3);border:1px solid var(--bd2);}
+.si-label{font-size:10px;margin-top:4px;text-align:center;white-space:nowrap;}
+.si-label.active{color:var(--tx);}
+.si-label.done{color:var(--am);}
+.si-label.inactive{color:var(--tx4);}
+.si-line{width:40px;height:1px;background:var(--bd2);margin-bottom:18px;flex-shrink:0;}
+.si-line.done{background:var(--am);}
+.si-wrap{display:flex;flex-direction:column;align-items:center;}
+
+/* ── SHARED LAYOUT ── */
+.flow-wrap{max-width:680px;width:100%;margin:0 auto;padding:40px 24px 120px;}
+.flow-head{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:300;color:var(--tx);margin-bottom:6px;letter-spacing:.03em;}
+.flow-sub{font-size:13px;color:var(--tx3);margin-bottom:32px;line-height:1.7;}
+
+/* ── BOTTOM BAR ── */
+.bottom-bar{position:fixed;bottom:0;left:0;right:0;background:var(--bg2);border-top:1px solid var(--bd);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;z-index:100;}
+.bb-left{display:flex;align-items:center;gap:10px;}
+.bb-right{display:flex;align-items:center;gap:10px;}
+.btn{padding:9px 22px;border-radius:var(--r);font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .15s;border:none;}
+.btn-ghost{background:transparent;border:1.5px solid var(--bd2);color:var(--tx2);}
+.btn-ghost:hover{border-color:var(--bd);color:var(--tx);}
+.btn-primary{background:var(--am);color:#1A1208;font-weight:500;padding:9px 32px;}
+.btn-primary:hover{background:var(--am2);}
+.btn-primary:disabled{background:var(--sf2);color:var(--tx3);cursor:not-allowed;}
+.btn-text{background:transparent;border:none;color:var(--tx3);font-size:12px;cursor:pointer;}
+.btn-text:hover{color:var(--tx2);}
+
+/* ════════════════════════
+   S0: ENTRY
+════════════════════════ */
+#s0{align-items:center;justify-content:center;}
+#s0::before{content:'';position:absolute;width:800px;height:800px;border-radius:50%;background:radial-gradient(circle,rgba(200,137,58,.04) 0%,transparent 65%);top:50%;left:50%;transform:translate(-50%,-55%);pointer-events:none;}
+.entry-logo{font-family:'Noto Serif JP',serif;font-size:11px;font-weight:300;color:var(--tx3);letter-spacing:.22em;text-transform:uppercase;margin-bottom:56px;animation:fadeUp .4s .1s both;}
+.entry-head{font-family:'Noto Serif JP',serif;font-size:28px;font-weight:300;color:var(--tx);text-align:center;line-height:1.65;letter-spacing:.04em;margin-bottom:10px;animation:fadeUp .4s .2s both;}
+.entry-sub{font-size:13px;color:var(--tx3);text-align:center;margin-bottom:48px;animation:fadeUp .4s .3s both;}
+.entry-cards{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:560px;animation:fadeUp .4s .4s both;}
+.entry-card{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--rl);padding:28px 24px;cursor:pointer;transition:all .2s;position:relative;overflow:hidden;}
+.entry-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--am-bg) 0%,transparent 60%);opacity:0;transition:opacity .2s;}
+.entry-card:hover{border-color:var(--am-bd);transform:translateY(-2px);}
+.entry-card:hover::before{opacity:1;}
+.ec-badge{position:absolute;top:12px;right:12px;font-size:9px;color:var(--am);border:1px solid var(--am-bd);border-radius:20px;padding:2px 8px;}
+.ec-icon{font-size:26px;margin-bottom:14px;display:block;}
+.ec-title{font-family:'Noto Serif JP',serif;font-size:16px;font-weight:400;color:var(--tx);margin-bottom:6px;}
+.ec-desc{font-size:11px;color:var(--tx3);line-height:1.8;}
+
+/* ════════════════════════
+   S1: GENRE + CONCEPT
+════════════════════════ */
+.genre-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:24px;}
+.genre-card{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:14px 16px;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:10px;}
+.genre-card:hover{border-color:var(--bd2);}
+.genre-card.sel{border-color:var(--am);background:var(--am-bg);}
+.genre-icon{font-size:18px;flex-shrink:0;}
+.genre-name{font-size:13px;color:var(--tx);font-weight:500;}
+.genre-sub{font-size:10px;color:var(--tx3);margin-top:1px;}
+.concept-input{width:100%;background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:14px 18px;font-size:14px;font-family:'Noto Serif JP',serif;color:var(--tx);outline:none;transition:border-color .2s;resize:none;line-height:1.8;}
+.concept-input:focus{border-color:var(--am-bd);}
+.concept-input::placeholder{color:var(--tx4);font-size:13px;}
+.concept-hint{font-size:11px;color:var(--tx3);margin-top:6px;}
+
+/* ════════════════════════
+   S2: APPEAL
+════════════════════════ */
+.appeal-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px;}
+.appeal-card{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--rl);padding:20px 16px;cursor:pointer;transition:all .2s;text-align:center;}
+.appeal-card:hover{border-color:var(--bd2);transform:translateY(-1px);}
+.appeal-card.sel{border-color:var(--am);background:var(--am-bg);}
+.appeal-icon{font-size:24px;margin-bottom:10px;display:block;}
+.appeal-name{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:4px;}
+.appeal-desc{font-size:11px;color:var(--tx3);line-height:1.6;}
+.appeal-other{width:100%;background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:'Noto Sans JP',sans-serif;color:var(--tx);outline:none;transition:border-color .2s;}
+.appeal-other:focus{border-color:var(--am-bd);}
+.appeal-other::placeholder{color:var(--tx4);}
+
+/* ════════════════════════
+   S3: SYNOPSIS
+════════════════════════ */
+.synopsis-wrap{position:relative;}
+.synopsis-textarea{width:100%;background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--rl);padding:18px;font-size:14px;font-family:'Noto Serif JP',serif;color:var(--tx);outline:none;transition:border-color .2s;resize:vertical;line-height:2;min-height:220px;}
+.synopsis-textarea:focus{border-color:var(--am-bd);}
+.synopsis-textarea::placeholder{color:var(--tx4);font-size:13px;line-height:2;}
+.synopsis-counter{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.sc-count{font-size:12px;font-family:'Noto Serif JP',serif;}
+.sc-count.ok{color:var(--grn);}
+.sc-count.warn{color:var(--am);}
+.sc-count.over{color:var(--red);}
+.sc-range{font-size:11px;color:var(--tx3);}
+
+/* ════════════════════════
+   S4: BUILD
+════════════════════════ */
+.build-tabs{display:flex;gap:0;border-bottom:1px solid var(--bd);margin-bottom:28px;}
+.build-tab{padding:8px 18px;font-size:12px;color:var(--tx3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s;}
+.build-tab:hover{color:var(--tx2);}
+.build-tab.active{color:var(--tx);border-bottom-color:var(--am);}
+.build-panel{display:none;}
+.build-panel.active{display:block;animation:fadeUp .2s ease;}
+
+/* field */
+.field{margin-bottom:18px;}
+.field-label{font-size:11px;color:var(--tx3);margin-bottom:7px;display:flex;align-items:center;gap:5px;}
+.field-label span{font-size:9px;color:var(--tx4);}
+.field-input{width:100%;background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:9px 13px;font-size:13px;font-family:'Noto Serif JP',serif;color:var(--tx);outline:none;transition:border-color .15s;resize:none;line-height:1.8;}
+.field-input:focus{border-color:var(--am-bd);}
+.field-input::placeholder{color:var(--tx4);font-size:12px;}
+.field-2col{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+
+/* char card */
+.char-block{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--rl);padding:18px;margin-bottom:12px;}
+.char-block-head{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.char-block-fields{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+.add-btn{width:100%;padding:9px;background:transparent;border:1.5px dashed var(--bd);border-radius:var(--r);font-size:12px;color:var(--tx3);cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif;margin-top:4px;}
+.add-btn:hover{border-color:var(--am-bd);color:var(--am);}
+
+/* plot row */
+.plot-item{display:grid;grid-template-columns:36px 1fr;gap:12px;align-items:flex-start;margin-bottom:14px;}
+.plot-marker{width:34px;height:34px;border-radius:50%;background:var(--sf);border:1.5px solid var(--bd2);display:flex;align-items:center;justify-content:center;font-family:'Noto Serif JP',serif;font-size:13px;color:var(--tx2);flex-shrink:0;margin-top:2px;transition:all .3s;}
+.plot-marker.filled{background:var(--am-bg);border-color:var(--am-bd);color:var(--am);}
+
+/* ════════════════════════
+   S5: SCORING
+════════════════════════ */
+.score-wrap{max-width:680px;margin:0 auto;padding:40px 24px 120px;}
+.score-head{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:300;color:var(--tx);margin-bottom:4px;}
+.score-sub{font-size:13px;color:var(--tx3);margin-bottom:36px;}
+.score-card{background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rl);padding:24px;margin-bottom:16px;}
+.sc-title{font-size:13px;font-weight:500;color:var(--tx);margin-bottom:14px;display:flex;align-items:center;gap:8px;}
+.score-row{display:flex;align-items:center;gap:12px;margin-bottom:10px;}
+.score-row:last-child{margin-bottom:0;}
+.sr-label{font-size:12px;color:var(--tx2);width:120px;flex-shrink:0;}
+.sr-bar{flex:1;height:6px;background:var(--sf2);border-radius:3px;overflow:hidden;}
+.sr-fill{height:100%;border-radius:3px;transition:width 1s ease;}
+.sr-val{font-size:12px;color:var(--tx3);width:32px;text-align:right;flex-shrink:0;font-family:'Noto Serif JP',serif;}
+.total-score{text-align:center;padding:28px;background:var(--bg2);border:1px solid var(--bd);border-radius:var(--rl);margin-bottom:16px;}
+.ts-num{font-family:'Noto Serif JP',serif;font-size:56px;font-weight:300;line-height:1;margin-bottom:6px;}
+.ts-label{font-size:12px;color:var(--tx3);}
+.feedback-block{background:var(--sf);border-left:2px solid var(--am);padding:14px 18px;border-radius:0 var(--r) var(--r) 0;margin-bottom:10px;}
+.fb-key{font-size:10px;color:var(--am);font-weight:500;letter-spacing:.06em;margin-bottom:5px;}
+.fb-text{font-size:13px;color:var(--tx2);line-height:1.8;}
+
+/* generating */
+.generating{display:flex;flex-direction:column;align-items:center;padding:80px 24px;}
+.gen-icon{font-size:28px;margin-bottom:18px;animation:spin 3s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gen-text{font-family:'Noto Serif JP',serif;font-size:15px;color:var(--tx2);margin-bottom:6px;}
+.gen-sub{font-size:12px;color:var(--tx3);}
+.gen-bar-wrap{width:200px;height:2px;background:var(--bd);border-radius:2px;margin-top:24px;overflow:hidden;}
+.gen-bar{height:100%;background:var(--am);animation:genbar 2s ease-in-out infinite;}
+@keyframes genbar{0%{width:0;margin-left:0}50%{width:60%;margin-left:0}100%{width:0;margin-left:200px}}
+
+/* ════════════════════════
+   EDITOR
+════════════════════════ */
+#editor{flex-direction:row;min-height:100vh;}
+.ed-sidebar{width:200px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto;}
+.eds-logo{padding:16px 18px 12px;font-family:'Noto Serif JP',serif;font-size:11px;color:var(--tx3);letter-spacing:.1em;border-bottom:1px solid var(--bd);}
+.eds-title{font-size:12px;font-weight:500;color:var(--tx);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.eds-genre{font-size:10px;color:var(--am);margin-top:2px;}
+.eds-story{padding:12px 18px;border-bottom:1px solid var(--bd);}
+.eds-sec{padding:10px 14px;border-bottom:1px solid var(--bd);}
+.eds-sec-hd{font-size:9px;color:var(--tx4);letter-spacing:.08em;text-transform:uppercase;margin-bottom:6px;}
+.design-mini{display:flex;flex-direction:column;gap:2px;}
+.dmi{font-size:10px;padding:4px 7px;border-radius:4px;background:var(--sf);color:var(--tx3);display:flex;gap:5px;}
+.dmi.filled{color:var(--am);background:var(--am-bg);}
+.dmi-key{flex-shrink:0;}
+.dmi-val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--tx2);}
+.eds-progress{padding:12px 18px;}
+.prog-lbl{font-size:9px;color:var(--tx4);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;}
+.prog-item{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.prog-nm{font-size:10px;color:var(--tx3);width:44px;flex-shrink:0;}
+.prog-bar{flex:1;height:2px;background:var(--sf2);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--am);border-radius:2px;transition:width .5s;}
+
+.ed-center{flex:1;display:flex;flex-direction:column;min-width:0;}
+.ed-topbar{height:48px;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50;}
+.ed-topbar-l{display:flex;align-items:center;gap:12px;flex:1;}
+.ed-topbar-r{display:flex;align-items:center;gap:8px;}
+.ed-wc{font-size:11px;color:var(--tx3);}
+.wc-n{color:var(--am);font-weight:500;}
+.ed-save{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:3px;}
+.ed-save::before{content:'●';font-size:7px;color:var(--grn);}
+.ed-back{background:none;border:none;font-size:16px;color:var(--tx3);cursor:pointer;}
+.ed-back:hover{color:var(--tx2);}
+.btn-sm{padding:5px 12px;border-radius:5px;font-size:11px;border:1px solid var(--bd2);background:transparent;color:var(--tx2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.btn-sm:hover{border-color:var(--bd);color:var(--tx);}
+.btn-sm-am{background:var(--am);border:none;color:#1A1208;font-weight:500;}
+.btn-sm-am:hover{background:var(--am2);}
+
+.scene-ctx{background:var(--bg2);border-bottom:1px solid var(--bd);padding:0 24px;display:flex;align-items:stretch;}
+.ctx-blk{padding:8px 14px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--bd);}
+.ctx-blk:first-child{padding-left:0;}
+.ctx-blk:last-child{border-right:none;margin-left:auto;}
+.ctx-key{font-size:9px;color:var(--tx3);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:2px;}
+.ctx-val{font-size:11px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:160px;}
+.ctx-val.am{color:var(--am);}
+.ctx-val.em{color:var(--tx3);font-style:italic;}
+.ctx-btn{font-size:10px;color:var(--tx3);background:none;border:none;cursor:pointer;text-decoration:underline;text-underline-offset:2px;font-family:'Noto Sans JP',sans-serif;}
+.ctx-btn:hover{color:var(--tx2);}
+
+.writing-area{flex:1;overflow-y:auto;padding:52px 0;}
+.writing-inner{max-width:600px;margin:0 auto;padding:0 32px;}
+.ep-title-in{font-family:'Noto Serif JP',serif;font-size:20px;font-weight:300;color:var(--tx);background:transparent;border:none;outline:none;width:100%;margin-bottom:28px;border-bottom:1px solid var(--bd);padding-bottom:16px;}
+.ep-title-in::placeholder{color:var(--tx3);}
+.writing-body{font-family:'Noto Serif JP',serif;font-size:16px;line-height:2.2;color:var(--tx);background:transparent;border:none;outline:none;width:100%;min-height:400px;resize:none;}
+.writing-body::placeholder{color:var(--tx3);font-size:14px;line-height:2;font-style:italic;}
+.milestone-bar{display:none;background:var(--grn-bg);border:1px solid rgba(90,140,106,.25);border-radius:var(--r);padding:8px 14px;margin-bottom:14px;font-size:11px;color:var(--grn);align-items:center;gap:8px;}
+.milestone-bar.show{display:flex;animation:fadeUp .3s ease;}
+
+.ai-panel{width:256px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--bd);height:100vh;position:sticky;top:0;display:flex;flex-direction:column;overflow:hidden;}
+.aip-hd{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;flex-shrink:0;}
+.aip-name{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--tx2);font-weight:500;}
+.aip-dot{width:6px;height:6px;border-radius:50%;background:var(--am);box-shadow:0 0 4px var(--am);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.aip-body{flex:1;overflow-y:auto;padding:14px;}
+.aip-hint{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rl);padding:12px 14px;margin-bottom:12px;}
+.aip-hint-lbl{font-size:9px;color:var(--am);font-weight:500;letter-spacing:.06em;margin-bottom:5px;}
+.aip-hint-txt{font-size:11px;color:var(--tx2);line-height:1.7;}
+.aip-sec{margin-bottom:14px;}
+.aip-sec-lbl{font-size:9px;color:var(--tx3);font-weight:500;letter-spacing:.06em;margin-bottom:6px;}
+.aip-btn{display:block;width:100%;text-align:left;padding:7px 11px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);font-size:11px;color:var(--tx2);cursor:pointer;margin-bottom:4px;transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.aip-btn:hover{border-color:var(--am-bd);color:var(--tx);background:var(--sf);}
+.aip-btn.ai-write{border-color:var(--am-bd);color:var(--am);background:var(--am-bg);}
+.aip-btn.ai-write:hover{background:rgba(200,137,58,.14);}
+.aip-chat-area{padding:12px;border-top:1px solid var(--bd);flex-shrink:0;}
+.aip-row{display:flex;gap:7px;align-items:flex-end;}
+.aip-in{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:7px 10px;font-size:11px;color:var(--tx);outline:none;resize:none;font-family:'Noto Sans JP',sans-serif;min-height:32px;transition:border-color .15s;}
+.aip-in:focus{border-color:var(--am-bd);}
+.aip-in::placeholder{color:var(--tx3);}
+.aip-send{width:28px;height:28px;background:var(--am);border:none;border-radius:5px;color:#1A1208;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.aip-send:hover{background:var(--am2);}
+.aip-credit{font-size:9px;color:var(--tx3);text-align:center;margin-top:7px;}
+
+/* achievement */
+.achievement{position:fixed;bottom:24px;right:24px;background:var(--sf2);border:1px solid var(--am-bd);border-radius:var(--rl);padding:12px 16px;display:flex;align-items:center;gap:10px;z-index:300;pointer-events:none;transform:translateY(16px);opacity:0;transition:all .4s;max-width:240px;}
+.achievement.show{transform:translateY(0);opacity:1;}
+.ach-icon{font-size:20px;flex-shrink:0;}
+.ach-lbl{font-size:9px;color:var(--am);font-weight:500;letter-spacing:.06em;}
+.ach-title{font-size:12px;color:var(--tx);font-weight:500;margin-top:1px;}
+
+@media(max-width:860px){.ed-sidebar{display:none;}.ai-panel{width:220px;}}
+@media(max-width:640px){.ai-panel{display:none;}.entry-cards{grid-template-columns:1fr;}.appeal-cards{grid-template-columns:1fr 1fr;}.genre-grid{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="achievement" id="ach">
+  <div class="ach-icon" id="achIco">🔥</div>
+  <div><div class="ach-lbl">ACHIEVEMENT</div><div class="ach-title" id="achTitle">—</div></div>
+</div>
+
+<!-- ════════ S0: ENTRY ════════ -->
+<div class="screen active" id="s0">
+  <div class="entry-logo">物語工房</div>
+  <h1 class="entry-head">どこから始めますか？</h1>
+  <p class="entry-sub">どちらを選んでもあとから変えられます。</p>
+  <div class="entry-cards">
+    <div class="entry-card" onclick="goFlow()">
+      <div class="ec-badge">おすすめ</div>
+      <span class="ec-icon">🏗</span>
+      <div class="ec-title">じっくり物語を作り込む</div>
+      <div class="ec-desc">ジャンル・あらすじ・各要素を設計してからエディターへ。AIがスコアリングして評価します。</div>
+    </div>
+    <div class="entry-card" onclick="goEditor()">
+      <span class="ec-icon">✍️</span>
+      <div class="ec-title">すぐに書き始める</div>
+      <div class="ec-desc">今すぐエディターを開きます。設計は書きながら後から足せます。</div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S1: GENRE + CONCEPT ════════ -->
+<div class="screen" id="s1">
+  <div class="progress-bar"><div class="progress-fill" style="width:20%"></div></div>
+  <div class="step-indicator" id="si1"></div>
+  <div class="flow-wrap">
+    <h2 class="flow-head">どんな物語を書きますか？</h2>
+    <p class="flow-sub">ジャンルと、一言で言えるコンセプトを決めましょう。</p>
+    <div class="genre-grid" id="genreGrid">
+      <div class="genre-card" onclick="selGenre(this,'ファンタジー')"><span class="genre-icon">🌙</span><div><div class="genre-name">ファンタジー</div><div class="genre-sub">魔法・異世界・冒険</div></div></div>
+      <div class="genre-card" onclick="selGenre(this,'SF・近未来')"><span class="genre-icon">◈</span><div><div class="genre-name">SF・近未来</div><div class="genre-sub">技術・宇宙・ディストピア</div></div></div>
+      <div class="genre-card" onclick="selGenre(this,'現代・日常')"><span class="genre-icon">☕</span><div><div class="genre-name">現代・日常</div><div class="genre-sub">等身大の人間ドラマ</div></div></div>
+      <div class="genre-card" onclick="selGenre(this,'ミステリー・サスペンス')"><span class="genre-icon">🔍</span><div><div class="genre-name">ミステリー</div><div class="genre-sub">謎・推理・サスペンス</div></div></div>
+      <div class="genre-card" onclick="selGenre(this,'歴史・時代')"><span class="genre-icon">⚔</span><div><div class="genre-name">歴史・時代</div><div class="genre-sub">史実・時代劇・架空歴史</div></div></div>
+      <div class="genre-card" onclick="selGenre(this,'ホラー・怪談')"><span class="genre-icon">🕯</span><div><div class="genre-name">ホラー・怪談</div><div class="genre-sub">恐怖・怪異・心理</div></div></div>
+    </div>
+    <div class="field">
+      <div class="field-label">一言で言うと？ <span>（コンセプト）</span></div>
+      <textarea class="concept-input" id="conceptIn" rows="2" placeholder="例：記憶を失った少女が王都で真実を探す話&#10;例：嘘をつくたびに強くなる魔法使いの贖罪の物語"></textarea>
+      <div class="concept-hint">断片でも、感情でも構いません。あとから変えられます。</div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <div class="bb-left"><button class="btn btn-ghost" onclick="show('s0')">← 戻る</button></div>
+    <div class="bb-right">
+      <button class="btn-text" onclick="goStep(2)">スキップ</button>
+      <button class="btn btn-primary" id="s1next" onclick="goStep(2)">次へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S2: APPEAL ════════ -->
+<div class="screen" id="s2">
+  <div class="progress-bar"><div class="progress-fill" style="width:40%"></div></div>
+  <div class="step-indicator" id="si2"></div>
+  <div class="flow-wrap">
+    <h2 class="flow-head">この物語の一番の魅力は？</h2>
+    <p class="flow-sub">複数選んでも構いません。作品の核心を教えてください。</p>
+    <div class="appeal-cards">
+      <div class="appeal-card" onclick="toggleAppeal(this,'キャラクター')">
+        <span class="appeal-icon">👤</span>
+        <div class="appeal-name">キャラクター</div>
+        <div class="appeal-desc">人物の欠落・欲望・矛盾が物語を動かす</div>
+      </div>
+      <div class="appeal-card" onclick="toggleAppeal(this,'ストーリー')">
+        <span class="appeal-icon">📖</span>
+        <div class="appeal-name">ストーリー</div>
+        <div class="appeal-desc">展開・伏線・反転の構造が読者を引き込む</div>
+      </div>
+      <div class="appeal-card" onclick="toggleAppeal(this,'世界観')">
+        <span class="appeal-icon">🌍</span>
+        <div class="appeal-name">世界観</div>
+        <div class="appeal-desc">設定・ルール・空気感が唯一無二の場所を作る</div>
+      </div>
+      <div class="appeal-card" onclick="toggleAppeal(this,'テーマ')">
+        <span class="appeal-icon">💡</span>
+        <div class="appeal-name">テーマ</div>
+        <div class="appeal-desc">問いかけ・メッセージが読後も残り続ける</div>
+      </div>
+      <div class="appeal-card" onclick="toggleAppeal(this,'文体・雰囲気')">
+        <span class="appeal-icon">✒</span>
+        <div class="appeal-name">文体・雰囲気</div>
+        <div class="appeal-desc">言葉の選び方・リズム・空気が作品を染める</div>
+      </div>
+      <div class="appeal-card" onclick="toggleAppeal(this,'感情体験')">
+        <span class="appeal-icon">❤</span>
+        <div class="appeal-name">感情体験</div>
+        <div class="appeal-desc">読者が感じる感動・恐怖・切なさ・興奮</div>
+      </div>
+    </div>
+    <div class="field" style="margin-top:16px">
+      <div class="field-label">その他 <span>（自由記述）</span></div>
+      <input type="text" class="appeal-other" id="appealOther" placeholder="例：謎解きの快感、圧倒的なアクション描写など">
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <div class="bb-left"><button class="btn btn-ghost" onclick="goStep(1)">← 戻る</button></div>
+    <div class="bb-right">
+      <button class="btn-text" onclick="goStep(3)">スキップ</button>
+      <button class="btn btn-primary" onclick="goStep(3)">次へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S3: SYNOPSIS ════════ -->
+<div class="screen" id="s3">
+  <div class="progress-bar"><div class="progress-fill" style="width:60%"></div></div>
+  <div class="step-indicator" id="si3"></div>
+  <div class="flow-wrap">
+    <h2 class="flow-head">あらすじを書いてください</h2>
+    <p class="flow-sub">読者が「読みたい」と思うあらすじを。説明より感情と緊張感を前に。</p>
+    <div class="synopsis-wrap">
+      <textarea class="synopsis-textarea" id="synopsisIn" placeholder="例：王都の外れで記憶を失って倒れていた少女・リアは、謎の組織に追われながら自分の過去を探し始める。唯一の手がかりは、右手に刻まれた消えない紋章——それが意味するのは、この国を揺るがす禁忌の秘密だった。&#10;&#10;誰も信じられない世界で、それでも誰かを信じることを選ぶ物語。" oninput="updateSynopsisCount()"></textarea>
+      <div class="synopsis-counter">
+        <div class="sc-count" id="synCount">0 字</div>
+        <div class="sc-range">目安：300〜1,000字</div>
+      </div>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <div class="bb-left"><button class="btn btn-ghost" onclick="goStep(2)">← 戻る</button></div>
+    <div class="bb-right">
+      <button class="btn-text" onclick="goStep(4)">スキップ</button>
+      <button class="btn btn-primary" onclick="goStep(4)">次へ →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S4: BUILD ════════ -->
+<div class="screen" id="s4">
+  <div class="progress-bar"><div class="progress-fill" style="width:80%"></div></div>
+  <div class="step-indicator" id="si4"></div>
+  <div class="flow-wrap">
+    <h2 class="flow-head">各要素を作り込む</h2>
+    <p class="flow-sub">物語の根幹を設計します。全部埋めなくて構いません。</p>
+    <div class="build-tabs">
+      <div class="build-tab active" onclick="switchTab(this,'tab-core')">物語の核</div>
+      <div class="build-tab" onclick="switchTab(this,'tab-proto')">主人公</div>
+      <div class="build-tab" onclick="switchTab(this,'tab-world')">世界の制約</div>
+      <div class="build-tab" onclick="switchTab(this,'tab-plot')">プロット</div>
+      <div class="build-tab" onclick="switchTab(this,'tab-chars')">登場人物</div>
+    </div>
+
+    <div class="build-panel active" id="tab-core">
+      <div class="field"><div class="field-label">この物語の執着・テーマ <span>（何に執着する物語か）</span></div><input class="field-input" id="core-theme" placeholder="例：赦せなさ、選び直し、他者を信じることへの恐れ"></div>
+      <div class="field"><div class="field-label">読後に残したい感情</div><input class="field-input" id="core-emotion" placeholder="例：痛みを伴う希望、救われきらなさ、静かな興奮"></div>
+      <div class="field"><div class="field-label">作者として譲れないもの</div><input class="field-input" id="core-rule" placeholder="例：誰かを完全な悪として描かない、選択には必ず代償を伴わせる"></div>
+    </div>
+
+    <div class="build-panel" id="tab-proto">
+      <div class="field-2col" style="margin-bottom:14px">
+        <div class="field"><div class="field-label">名前</div><input class="field-input" id="proto-name" placeholder="例：ルシアン（仮でも可）"></div>
+        <div class="field"><div class="field-label">属性・立場</div><input class="field-input" id="proto-role" placeholder="例：王都の孤児、元騎士"></div>
+      </div>
+      <div class="field"><div class="field-label">欠落 <span>（何が欠けているか）</span></div><input class="field-input" id="proto-flaw" placeholder="例：他者を信じる力がない、自己価値を外部評価に依存している"></div>
+      <div class="field-2col">
+        <div class="field"><div class="field-label">表向きの欲望</div><input class="field-input" id="proto-drive" placeholder="例：功績、居場所、復讐"></div>
+        <div class="field"><div class="field-label">本当の欲望</div><input class="field-input" id="proto-real" placeholder="例：許されたい、誰かに選ばれたい"></div>
+      </div>
+      <div class="field"><div class="field-label">矛盾 <span>（人間にする矛盾）</span></div><input class="field-input" id="proto-contra" placeholder="例：冷静だが見捨てられることに異常に弱い"></div>
+    </div>
+
+    <div class="build-panel" id="tab-world">
+      <div class="field-2col" style="margin-bottom:14px">
+        <div class="field"><div class="field-label">舞台・時代</div><input class="field-input" id="world-stage" placeholder="例：王都第七区、近未来の管理都市"></div>
+        <div class="field"><div class="field-label">文明レベル</div><input class="field-input" id="world-civ" placeholder="例：中世相当、監視AI社会"></div>
+      </div>
+      <div class="field"><div class="field-label">世界のルール <span>（この世界ならではの前提）</span></div><textarea class="field-input" rows="2" id="world-rule" placeholder="例：魔法は記憶を代価にしか発動しない&#10;例：AIが法を執行するが、人間の感情は裁けない"></textarea></div>
+      <div class="field"><div class="field-label">主人公を追い込む条件</div><input class="field-input" id="world-trap" placeholder="例：身分制度、血統による能力制限、完全監視社会"></div>
+      <div class="field"><div class="field-label">この設定が効く場面</div><input class="field-input" id="world-scene" placeholder="例：終盤で身分制度が恋愛と選択の障害になる"></div>
+    </div>
+
+    <div class="build-panel" id="tab-plot">
+      <div class="plot-item"><div class="plot-marker" id="pm0">起</div><div class="field" style="flex:1;margin:0"><div class="field-label">日常と最初の変化</div><textarea class="field-input" rows="2" id="plot-ki" placeholder="主人公の日常と、それを最初に揺らすもの" oninput="updatePlotMarker(0,this.value)"></textarea></div></div>
+      <div class="plot-item"><div class="plot-marker" id="pm1">承</div><div class="field" style="flex:1;margin:0"><div class="field-label">拡張と圧力</div><textarea class="field-input" rows="2" id="plot-sho" placeholder="何が広がり、何が迫ってくるか" oninput="updatePlotMarker(1,this.value)"></textarea></div></div>
+      <div class="plot-item"><div class="plot-marker" id="pm2">転</div><div class="field" style="flex:1;margin:0"><div class="field-label">不可逆な崩壊</div><textarea class="field-input" rows="2" id="plot-ten" placeholder="何が決定的に壊れ、何が反転するか" oninput="updatePlotMarker(2,this.value)"></textarea></div></div>
+      <div class="plot-item"><div class="plot-marker" id="pm3">結</div><div class="field" style="flex:1;margin:0"><div class="field-label">最終選択と余韻</div><textarea class="field-input" rows="2" id="plot-ketsu" placeholder="主人公が最後に何を選び、何が残るか" oninput="updatePlotMarker(3,this.value)"></textarea></div></div>
+    </div>
+
+    <div class="build-panel" id="tab-chars">
+      <div id="charBlocks">
+        <div class="char-block">
+          <div class="char-block-head">
+            <input class="field-input" placeholder="名前" oninput="updateCharAvatar(this)">
+            <input class="field-input" placeholder="役割（相棒・ライバル・対立者…）">
+          </div>
+          <div class="char-block-fields">
+            <input class="field-input" placeholder="欠落">
+            <input class="field-input" placeholder="欲望">
+            <input class="field-input" placeholder="この人物の核心（一文）" style="grid-column:1/-1">
+          </div>
+        </div>
+      </div>
+      <button class="add-btn" onclick="addChar()">＋ 登場人物を追加する</button>
+    </div>
+  </div>
+  <div class="bottom-bar">
+    <div class="bb-left"><button class="btn btn-ghost" onclick="goStep(3)">← 戻る</button></div>
+    <div class="bb-right">
+      <button class="btn-text" onclick="startScoring()">スキップして評価へ</button>
+      <button class="btn btn-primary" onclick="startScoring()">評価する →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ S5: SCORING ════════ -->
+<div class="screen" id="s5">
+  <div class="progress-bar"><div class="progress-fill" style="width:100%"></div></div>
+  <div id="scoreContent">
+    <div class="generating" id="genState">
+      <div class="gen-icon">✦</div>
+      <div class="gen-text">企画を評価しています</div>
+      <div class="gen-sub" id="genStatus">各要素を分析中…</div>
+      <div class="gen-bar-wrap"><div class="gen-bar"></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ EDITOR ════════ -->
+<div class="screen" id="editor">
+  <div class="ed-sidebar">
+    <div class="eds-logo">物語工房</div>
+    <div class="eds-story">
+      <div class="eds-title" id="edTitle">新しい物語</div>
+      <div class="eds-genre" id="edGenre">ジャンル未設定</div>
+    </div>
+    <div class="eds-sec">
+      <div class="eds-sec-hd">設計図</div>
+      <div class="design-mini">
+        <div class="dmi" id="dmi-core"><span class="dmi-key">核</span><span class="dmi-val" id="dmi-core-v">未設定</span></div>
+        <div class="dmi" id="dmi-proto"><span class="dmi-key">主人公</span><span class="dmi-val" id="dmi-proto-v">未設定</span></div>
+        <div class="dmi" id="dmi-world"><span class="dmi-key">世界</span><span class="dmi-val" id="dmi-world-v">未設定</span></div>
+        <div class="dmi" id="dmi-plot"><span class="dmi-key">構造</span><span class="dmi-val" id="dmi-plot-v">未設定</span></div>
+      </div>
+    </div>
+    <div class="eds-progress">
+      <div class="prog-lbl">作品の育ち具合</div>
+      <div class="prog-item"><div class="prog-nm">執筆量</div><div class="prog-bar"><div class="prog-fill" id="pg-w" style="width:0%"></div></div></div>
+      <div class="prog-item"><div class="prog-nm">設計図</div><div class="prog-bar"><div class="prog-fill" id="pg-d" style="width:0%"></div></div></div>
+    </div>
+  </div>
+  <div class="ed-center">
+    <div class="ed-topbar">
+      <div class="ed-topbar-l">
+        <button class="ed-back" onclick="show('s0')">←</button>
+        <div class="ed-wc"><span class="wc-n" id="wcNum">0</span> 字</div>
+        <div class="ed-save">自動保存済み</div>
+      </div>
+      <div class="ed-topbar-r">
+        <button class="btn-sm" onclick="toast('下書き保存しました')">保存</button>
+        <button class="btn-sm btn-sm-am" onclick="toast('公開機能（実装予定）')">公開する</button>
+      </div>
+    </div>
+    <div class="scene-ctx">
+      <div class="ctx-blk"><div class="ctx-key">第1話</div><div class="ctx-val am">執筆中</div></div>
+      <div class="ctx-blk"><div class="ctx-key">物語の核</div><div class="ctx-val em" id="ctxCore">未設定</div></div>
+      <div class="ctx-blk"><div class="ctx-key">主人公</div><div class="ctx-val em" id="ctxProto">未設定</div></div>
+      <div class="ctx-blk"><button class="ctx-btn" onclick="show('s4')">設計図を開く</button></div>
+    </div>
+    <div class="writing-area">
+      <div class="writing-inner">
+        <input class="ep-title-in" placeholder="エピソードタイトル（仮でも可）">
+        <div class="milestone-bar" id="milebar"><span>🔥</span><span id="mileTxt">—</span></div>
+        <textarea class="writing-body" id="writingBody" rows="20"
+          placeholder="書き始めてください。&#10;&#10;設計図は左サイドバー・右上「設計図を開く」からいつでも参照できます。"></textarea>
+      </div>
+    </div>
+  </div>
+  <div class="ai-panel">
+    <div class="aip-hd">
+      <div class="aip-name"><div class="aip-dot"></div>相棒</div>
+      <span style="font-size:10px;color:var(--tx3);cursor:pointer">履歴</span>
+    </div>
+    <div class="aip-body">
+      <div class="aip-hint">
+        <div class="aip-hint-lbl">今できること</div>
+        <div class="aip-hint-txt" id="aiHint">設計図が揃うと、この場面に合ったヒントが表示されます。</div>
+      </div>
+      <div class="aip-sec">
+        <div class="aip-sec-lbl">執筆</div>
+        <button class="aip-btn ai-write" onclick="toast('AIが執筆します…')">✦ AIが執筆する</button>
+        <button class="aip-btn" onclick="toast('続きを生成中...')">この続きを書く</button>
+        <button class="aip-btn" onclick="toast('冒頭を生成中...')">冒頭を作る</button>
+      </div>
+      <div class="aip-sec">
+        <div class="aip-sec-lbl">強化</div>
+        <button class="aip-btn" onclick="toast('整えています...')">文章を整える</button>
+        <button class="aip-btn" onclick="toast('強化中...')">シーン描写を強くする</button>
+        <button class="aip-btn" onclick="toast('改善中...')">会話を自然にする</button>
+      </div>
+    </div>
+    <div class="aip-chat-area">
+      <div class="aip-row">
+        <textarea class="aip-in" placeholder="相棒への指示…" rows="2"></textarea>
+        <button class="aip-send" onclick="toast('相棒が考えています...')">→</button>
+      </div>
+      <div class="aip-credit">0cr · Pro · <span style="color:var(--am);cursor:pointer">プランを確認</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── STATE ──
+let state = {
+  genre:'', concept:'', appeals:[], synopsis:'',
+  core:{theme:'',emotion:'',rule:''},
+  proto:{name:'',role:'',flaw:'',drive:'',real:'',contra:''},
+  world:{stage:'',civ:'',rule:'',trap:'',scene:''},
+  plot:{ki:'',sho:'',ten:'',ketsu:''},
+  chars:[]
+};
+let wc=0, miles={100:false,300:false,500:false,1000:false};
+const mileD={100:{i:'📝',t:'物語が動き出した'},300:{i:'🔥',t:'勢いがついてきた'},500:{i:'✨',t:'場面が立ち上がった'},1000:{i:'📖',t:'一つの世界が生まれた'}};
+
+// ── STEPS ──
+const STEPS = ['ジャンル','魅力','あらすじ','設計','評価'];
+function renderStepIndicator(containerId, current){
+  const el = document.getElementById(containerId);
+  if(!el) return;
+  let html = '';
+  STEPS.forEach((s,i)=>{
+    const n = i+1;
+    const state = n<current?'done':n===current?'active':'inactive';
+    if(i>0) html+=`<div class="si-line ${n<=current?'done':''}"></div>`;
+    html+=`<div class="si-wrap"><div class="si-dot ${state}">${n<current?'✓':n}</div><div class="si-label ${state}">${s}</div></div>`;
+  });
+  el.innerHTML = `<div style="display:flex;align-items:flex-start;gap:0">${html}</div>`;
+}
+
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+function goStep(n){
+  collectCurrentStep();
+  renderStepIndicator('si'+n, n);
+  show('s'+n);
+}
+
+function goFlow(){ renderStepIndicator('si1',1); show('s1'); }
+function goEditor(){ syncEditorFromState(); show('editor'); setTimeout(()=>document.getElementById('writingBody').focus(),200); }
+
+// ── COLLECT ──
+function collectCurrentStep(){
+  const sc = document.querySelector('.screen.active');
+  if(!sc) return;
+  const id = sc.id;
+  if(id==='s1'){
+    state.concept = document.getElementById('conceptIn').value;
+  }
+  if(id==='s2'){
+    const other = document.getElementById('appealOther').value;
+    if(other && !state.appeals.includes(other)) state.appeals.push(other);
+  }
+  if(id==='s3'){
+    state.synopsis = document.getElementById('synopsisIn').value;
+  }
+  if(id==='s4'){
+    state.core.theme   = document.getElementById('core-theme').value;
+    state.core.emotion = document.getElementById('core-emotion').value;
+    state.core.rule    = document.getElementById('core-rule').value;
+    state.proto.name   = document.getElementById('proto-name').value;
+    state.proto.role   = document.getElementById('proto-role').value;
+    state.proto.flaw   = document.getElementById('proto-flaw').value;
+    state.proto.drive  = document.getElementById('proto-drive').value;
+    state.proto.real   = document.getElementById('proto-real').value;
+    state.proto.contra = document.getElementById('proto-contra').value;
+    state.world.stage  = document.getElementById('world-stage').value;
+    state.world.civ    = document.getElementById('world-civ').value;
+    state.world.rule   = document.getElementById('world-rule').value;
+    state.world.trap   = document.getElementById('world-trap').value;
+    state.world.scene  = document.getElementById('world-scene').value;
+    state.plot.ki    = document.getElementById('plot-ki').value;
+    state.plot.sho   = document.getElementById('plot-sho').value;
+    state.plot.ten   = document.getElementById('plot-ten').value;
+    state.plot.ketsu = document.getElementById('plot-ketsu').value;
+  }
+}
+
+// ── GENRE ──
+function selGenre(el, label){
+  document.querySelectorAll('.genre-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel');
+  state.genre = label;
+}
+
+// ── APPEAL ──
+function toggleAppeal(el, label){
+  el.classList.toggle('sel');
+  if(el.classList.contains('sel')){
+    if(!state.appeals.includes(label)) state.appeals.push(label);
+  } else {
+    state.appeals = state.appeals.filter(a=>a!==label);
+  }
+}
+
+// ── SYNOPSIS COUNT ──
+function updateSynopsisCount(){
+  const v = document.getElementById('synopsisIn').value;
+  const n = v.replace(/\s/g,'').length;
+  const el = document.getElementById('synCount');
+  el.textContent = n+' 字';
+  el.className = 'sc-count ' + (n===0?'':(n<300?'warn':(n<=1000?'ok':'over')));
+}
+
+// ── TABS ──
+function switchTab(el, panelId){
+  document.querySelectorAll('.build-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.build-panel').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById(panelId).classList.add('active');
+}
+
+// ── PLOT MARKERS ──
+function updatePlotMarker(idx, val){
+  document.getElementById('pm'+idx).classList.toggle('filled', !!val.trim());
+}
+
+// ── CHARS ──
+let charIdx = 1;
+function addChar(){
+  const i = charIdx++;
+  const block = document.createElement('div');
+  block.className = 'char-block';
+  block.innerHTML = `
+    <div class="char-block-head">
+      <input class="field-input" placeholder="名前">
+      <input class="field-input" placeholder="役割">
+    </div>
+    <div class="char-block-fields">
+      <input class="field-input" placeholder="欠落">
+      <input class="field-input" placeholder="欲望">
+      <input class="field-input" placeholder="この人物の核心（一文）" style="grid-column:1/-1">
+    </div>`;
+  document.getElementById('charBlocks').appendChild(block);
+}
+function updateCharAvatar(el){ /* visual feedback */ }
+
+// ── SCORING ──
+async function startScoring(){
+  collectCurrentStep();
+  renderStepIndicator('si5',5);
+  show('s5');
+  const statuses = ['各要素を分析中…','テーマの強度を評価中…','キャラクターの駆動力を確認中…','構造の整合性を検証中…','総合評価を算出中…'];
+  let si=0;
+  const interval = setInterval(()=>{
+    si=(si+1)%statuses.length;
+    const el=document.getElementById('genStatus');
+    if(el) el.textContent=statuses[si];
+  },1200);
+
+  try {
+    const scores = await callScoringAI();
+    clearInterval(interval);
+    renderScoring(scores);
+  } catch(e){
+    clearInterval(interval);
+    renderScoringFallback();
+  }
+}
+
+async function callScoringAI(){
+  const body = {
+    model:'claude-sonnet-4-20250514',
+    max_tokens:1200,
+    messages:[{role:'user', content:`小説企画を評価してください。
+
+【企画情報】
+ジャンル：${state.genre||'未設定'}
+コンセプト：${state.concept||'未設定'}
+魅力：${state.appeals.join('、')||'未設定'}
+あらすじ：${state.synopsis||'未設定'}
+テーマ：${state.core.theme||'未設定'}
+読後感：${state.core.emotion||'未設定'}
+主人公：${state.proto.name||'未設定'}（欠落：${state.proto.flaw||'未設定'}、欲望：${state.proto.drive||'未設定'}）
+舞台：${state.world.stage||'未設定'}
+世界ルール：${state.world.rule||'未設定'}
+起：${state.plot.ki||'未設定'}
+転：${state.plot.ten||'未設定'}
+
+以下のJSON形式のみで返してください（他の文字は一切含めない）：
+{
+  "total": 数値(0-100),
+  "scores": {
+    "concept": {"score": 数値(0-20), "comment": "20字以内のコメント"},
+    "character": {"score": 数値(0-20), "comment": "20字以内のコメント"},
+    "world": {"score": 数値(0-20), "comment": "20字以内のコメント"},
+    "plot": {"score": 数値(0-20), "comment": "20字以内のコメント"},
+    "originality": {"score": 数値(0-20), "comment": "20字以内のコメント"}
+  },
+  "strength": "この企画の一番の強みを30字以内で",
+  "weakness": "最も改善すべき点を30字以内で",
+  "advice": "執筆を始める前に意識すべきことを50字以内で"
+}`}]};
+
+  const res = await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  const data = await res.json();
+  const raw = data.content[0].text;
+  return JSON.parse(raw.match(/\{[\s\S]*\}/)[0]);
+}
+
+function renderScoring(d){
+  const colorMap = n => n>=16?'var(--grn)':n>=10?'var(--am)':'var(--red)';
+  const totalColor = d.total>=70?'var(--grn)':d.total>=40?'var(--am)':'var(--red)';
+  const labels = {concept:'コンセプト',character:'キャラクター',world:'世界観',plot:'プロット',originality:'独自性'};
+
+  let scoreRows = '';
+  for(const [k,v] of Object.entries(d.scores)){
+    const pct = (v.score/20*100);
+    scoreRows += `
+      <div class="score-row">
+        <div class="sr-label">${labels[k]||k}</div>
+        <div class="sr-bar"><div class="sr-fill" style="width:0%;background:${colorMap(v.score)}" data-pct="${pct}"></div></div>
+        <div class="sr-val" style="color:${colorMap(v.score)}">${v.score}/20</div>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);padding:0 0 10px 132px;">${v.comment}</div>`;
+  }
+
+  document.getElementById('scoreContent').innerHTML = `
+    <div class="score-wrap">
+      <h2 class="score-head">評価結果</h2>
+      <p class="score-sub">${state.concept||'この企画'}の評価が完了しました。</p>
+
+      <div class="total-score">
+        <div class="ts-num" style="color:${totalColor}">${d.total}</div>
+        <div class="ts-label">/ 100点</div>
+      </div>
+
+      <div class="score-card">
+        <div class="sc-title">各項目のスコア</div>
+        ${scoreRows}
+      </div>
+
+      <div class="feedback-block"><div class="fb-key">強み</div><div class="fb-text">${d.strength}</div></div>
+      <div class="feedback-block" style="border-color:var(--red)"><div class="fb-key" style="color:var(--red)">改善点</div><div class="fb-text">${d.weakness}</div></div>
+      <div class="feedback-block" style="border-color:var(--blue,#4A7AAA)"><div class="fb-key" style="color:var(--blue,#4A7AAA)">執筆前のアドバイス</div><div class="fb-text">${d.advice}</div></div>
+
+      <div style="text-align:center;margin-top:32px">
+        <button class="btn btn-primary" onclick="goEditorFromScore()" style="padding:12px 48px;font-size:14px">この企画で書き始める →</button>
+      </div>
+    </div>`;
+
+  // animate bars
+  setTimeout(()=>{
+    document.querySelectorAll('.sr-fill').forEach(el=>{
+      el.style.transition='width 1s ease';
+      el.style.width = el.dataset.pct+'%';
+    });
+  },100);
+}
+
+function renderScoringFallback(){
+  // simple fallback without API
+  const total = calcFallbackScore();
+  document.getElementById('scoreContent').innerHTML = `
+    <div class="score-wrap">
+      <h2 class="score-head">評価結果</h2>
+      <p class="score-sub">入力内容をもとに評価しました。</p>
+      <div class="total-score">
+        <div class="ts-num" style="color:var(--am)">${total}</div>
+        <div class="ts-label">/ 100点（概算）</div>
+      </div>
+      <div class="feedback-block"><div class="fb-key">入力状況</div><div class="fb-text">設計図の入力量をもとに算出しました。各要素を詳しく設定するほど、より精度の高い評価が得られます。</div></div>
+      <div style="text-align:center;margin-top:32px">
+        <button class="btn btn-primary" onclick="goEditorFromScore()" style="padding:12px 48px;font-size:14px">この企画で書き始める →</button>
+      </div>
+    </div>`;
+}
+
+function calcFallbackScore(){
+  let s=0;
+  if(state.genre) s+=10;
+  if(state.concept) s+=10;
+  if(state.appeals.length) s+=10;
+  if(state.synopsis.replace(/\s/g,'').length>=100) s+=15;
+  if(state.core.theme) s+=10;
+  if(state.proto.name) s+=10;
+  if(state.proto.flaw) s+=10;
+  if(state.world.stage) s+=10;
+  if(state.plot.ki && state.plot.ten) s+=15;
+  return Math.min(s,100);
+}
+
+function goEditorFromScore(){
+  syncEditorFromState();
+  show('editor');
+  setTimeout(()=>document.getElementById('writingBody').focus(),200);
+}
+
+// ── SYNC STATE → EDITOR ──
+function syncEditorFromState(){
+  if(state.genre){ document.getElementById('edGenre').textContent=state.genre; }
+  if(state.concept){ document.getElementById('edTitle').textContent=state.concept.substring(0,20); }
+  const core = state.core.theme || state.core.emotion;
+  const proto = state.proto.name;
+  document.getElementById('ctxCore').textContent  = core  || '未設定';
+  document.getElementById('ctxProto').textContent = proto || '未設定';
+  document.getElementById('ctxCore').className    = 'ctx-val'+(core?'':' em');
+  document.getElementById('ctxProto').className   = 'ctx-val'+(proto?'':' em');
+  // design mini
+  let filled = 0;
+  if(core){ document.getElementById('dmi-core').classList.add('filled'); document.getElementById('dmi-core-v').textContent=core.substring(0,12); filled++; }
+  if(proto){ document.getElementById('dmi-proto').classList.add('filled'); document.getElementById('dmi-proto-v').textContent=proto; filled++; }
+  if(state.world.stage){ document.getElementById('dmi-world').classList.add('filled'); document.getElementById('dmi-world-v').textContent=state.world.stage.substring(0,10); filled++; }
+  if(state.plot.ki){ document.getElementById('dmi-plot').classList.add('filled'); document.getElementById('dmi-plot-v').textContent='設定済み'; filled++; }
+  document.getElementById('pg-d').style.width=(filled/4*100)+'%';
+  if(core||proto) document.getElementById('aiHint').textContent='設計図の内容をもとに執筆支援します。「AIが執筆する」で設計図に合った冒頭を生成できます。';
+}
+
+// ── WORD COUNT ──
+function updateWC(){
+  const txt=document.getElementById('writingBody').value.replace(/\s/g,'');
+  wc=txt.length;
+  document.getElementById('wcNum').textContent=wc.toLocaleString();
+  document.getElementById('pg-w').style.width=Math.min(wc/2000*100,100)+'%';
+  for(const [n,fired] of Object.entries(miles)){
+    if(!fired&&wc>=n){ miles[n]=true; showAch(mileD[n]); showMile(mileD[n].t); }
+  }
+}
+
+function showAch(d){
+  document.getElementById('achIco').textContent=d.i;
+  document.getElementById('achTitle').textContent=d.t;
+  const el=document.getElementById('ach');
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+function showMile(t){
+  const el=document.getElementById('milebar');
+  document.getElementById('mileTxt').textContent=t;
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>{
+  document.getElementById('writingBody').addEventListener('input',updateWC);
+});
+</script>
+</body>
+</html>
