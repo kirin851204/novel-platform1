@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物語工房</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:    #16120E;
+  --bg2:   #1E1812;
+  --bg3:   #261F18;
+  --sf:    #2C2419;
+  --sf2:   #342C1F;
+  --bd:    #3D3328;
+  --bd2:   #524438;
+  --tx:    #EDE8DF;
+  --tx2:   #A89880;
+  --tx3:   #6B5E50;
+  --am:    #C8893A;
+  --am2:   #E8A855;
+  --am-bg: rgba(200,137,58,.10);
+  --am-bd: rgba(200,137,58,.28);
+  --gn:    #5A8C6A;
+  --gn-bg: rgba(90,140,106,.12);
+  --r:8px; --rl:12px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--tx);min-height:100vh;overflow-x:hidden;}
+
+.screen{display:none;}
+.screen.active{display:flex;flex-direction:column;min-height:100vh;animation:fadeUp .3s ease both;}
+@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-6px);background:var(--am);color:#1A1208;padding:9px 22px;border-radius:30px;font-size:13px;font-family:'Noto Serif JP',serif;font-weight:500;z-index:999;opacity:0;transition:all .35s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+.achievement{position:fixed;bottom:24px;right:24px;background:var(--sf2);border:1px solid var(--am-bd);border-radius:var(--rl);padding:14px 18px;display:flex;align-items:center;gap:12px;z-index:300;pointer-events:none;transform:translateY(16px);opacity:0;transition:all .4s;max-width:260px;}
+.achievement.show{transform:translateY(0);opacity:1;}
+.ach-icon{font-size:22px;flex-shrink:0;}
+.ach-label{font-size:10px;color:var(--am);font-weight:500;letter-spacing:.06em;}
+.ach-title{font-size:13px;color:var(--tx);font-weight:500;margin-top:1px;}
+.ach-sub{font-size:11px;color:var(--tx3);margin-top:1px;}
+
+/* ══════════ S1 SPARK ══════════ */
+#s1{align-items:center;justify-content:center;padding:48px 24px;position:relative;overflow:hidden;}
+#s1::before{content:'';position:absolute;width:700px;height:700px;border-radius:50%;background:radial-gradient(circle,rgba(200,137,58,.05) 0%,transparent 70%);top:-80px;left:50%;transform:translateX(-50%);pointer-events:none;}
+
+.logo{font-family:'Noto Serif JP',serif;font-size:12px;font-weight:300;color:var(--tx3);letter-spacing:.2em;text-transform:uppercase;margin-bottom:52px;animation:fadeUp .4s .1s both;}
+.s1-head{font-family:'Noto Serif JP',serif;font-size:30px;font-weight:300;color:var(--tx);text-align:center;line-height:1.55;letter-spacing:.04em;margin-bottom:10px;animation:fadeUp .4s .2s both;}
+.s1-sub{font-size:13px;color:var(--tx3);text-align:center;margin-bottom:44px;animation:fadeUp .4s .3s both;}
+
+.mood-grid{display:grid;grid-template-columns:repeat(4,148px);gap:10px;margin-bottom:36px;animation:fadeUp .4s .4s both;}
+.mood-card{height:185px;border-radius:var(--rl);position:relative;cursor:pointer;overflow:hidden;border:2px solid transparent;transition:all .2s;}
+.mood-card:hover{transform:translateY(-2px);border-color:var(--bd2);}
+.mood-card.sel{border-color:var(--am);}
+.mood-card.sel::after{content:'✓';position:absolute;top:9px;right:9px;width:20px;height:20px;background:var(--am);color:#1A1208;border-radius:50%;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+.m1{background:linear-gradient(160deg,#1A0F24,#3D1A2E 40%,#1E0A14);}
+.m2{background:linear-gradient(160deg,#0A1A24,#0E3040 40%,#061018);}
+.m3{background:linear-gradient(160deg,#1A1206,#3A2808 40%,#1A1408);}
+.m4{background:linear-gradient(160deg,#060E1A,#0A2030 40%,#061820);}
+.mood-sym{position:absolute;top:50%;left:50%;transform:translate(-50%,-55%);font-size:32px;opacity:.7;}
+.mood-lbl{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:12px;font-weight:500;color:rgba(255,255,255,.7);}
+.mood-s2{position:absolute;bottom:3px;left:0;right:0;text-align:center;font-size:10px;color:rgba(255,255,255,.4);}
+
+.spark-wrap{width:100%;max-width:520px;margin-bottom:22px;animation:fadeUp .4s .5s both;}
+.spark-in{width:100%;background:var(--bg2);border:1.5px solid var(--bd2);border-radius:var(--rl);padding:16px 20px;font-size:15px;font-family:'Noto Serif JP',serif;color:var(--tx);outline:none;transition:border-color .2s;}
+.spark-in:focus{border-color:var(--am);}
+.spark-in::placeholder{color:var(--tx3);font-size:13px;}
+.spark-hint{font-size:11px;color:var(--tx3);text-align:center;margin-top:7px;}
+
+.spark-actions{display:flex;flex-direction:column;align-items:center;gap:10px;animation:fadeUp .4s .6s both;}
+.btn-lg{padding:13px 44px;background:var(--am);color:#1A1208;border:none;border-radius:40px;font-size:14px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .2s;letter-spacing:.04em;}
+.btn-lg:hover{background:var(--am2);transform:translateY(-1px);box-shadow:0 8px 20px rgba(200,137,58,.25);}
+.spark-or{display:flex;align-items:center;gap:10px;width:100%;max-width:360px;color:var(--tx3);font-size:11px;}
+.spark-or::before,.spark-or::after{content:'';flex:1;height:1px;background:var(--bd);}
+.btn-ghost-pill{padding:9px 24px;background:transparent;border:1.5px solid var(--bd2);border-radius:40px;font-size:12px;color:var(--tx2);cursor:pointer;transition:all .2s;font-family:'Noto Sans JP',sans-serif;display:flex;align-items:center;gap:5px;}
+.btn-ghost-pill::before{content:'✦';color:var(--am);font-size:10px;}
+.btn-ghost-pill:hover{border-color:var(--am-bd);color:var(--tx);}
+.spark-link{font-size:11px;color:var(--tx3);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.spark-link:hover{color:var(--tx2);}
+
+/* ══════════ S2 BRIDGE ══════════ */
+#s2{background:var(--bg);padding:0;}
+#s2.active{display:grid;grid-template-columns:1fr 320px;min-height:100vh;}
+
+/* LEFT: step-by-step design */
+.bridge-main{padding:52px 48px 80px;overflow-y:auto;}
+.bridge-back{background:none;border:none;font-size:12px;color:var(--tx3);cursor:pointer;margin-bottom:36px;display:flex;align-items:center;gap:5px;font-family:'Noto Sans JP',sans-serif;}
+.bridge-back:hover{color:var(--tx2);}
+.bridge-back::before{content:'←';}
+
+.bridge-head{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:300;color:var(--tx);margin-bottom:6px;letter-spacing:.03em;}
+.bridge-sub{font-size:13px;color:var(--tx3);margin-bottom:40px;line-height:1.7;}
+
+/* Each design block */
+.design-block{margin-bottom:36px;padding-bottom:36px;border-bottom:1px solid var(--bd);}
+.design-block:last-of-type{border-bottom:none;}
+
+.db-num{font-size:10px;color:var(--am);font-weight:500;letter-spacing:.08em;margin-bottom:8px;}
+.db-title{font-size:14px;font-weight:500;color:var(--tx);margin-bottom:4px;}
+.db-desc{font-size:12px;color:var(--tx3);margin-bottom:14px;line-height:1.6;}
+
+/* INPUT STYLES */
+.db-input{width:100%;background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:10px 14px;font-size:13px;font-family:'Noto Serif JP',serif;color:var(--tx);outline:none;transition:border-color .2s;resize:none;}
+.db-input:focus{border-color:var(--am-bd);}
+.db-input::placeholder{color:var(--tx3);font-size:12px;}
+
+.db-2col{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;}
+.db-field-label{font-size:11px;color:var(--tx3);margin-bottom:5px;}
+
+/* CHIP SELECT */
+.chip-group{display:flex;flex-wrap:wrap;gap:7px;margin-bottom:10px;}
+.chip{padding:6px 14px;border-radius:20px;border:1.5px solid var(--bd);background:var(--bg2);font-size:12px;color:var(--tx2);cursor:pointer;transition:all .15s;user-select:none;}
+.chip:hover{border-color:var(--bd2);color:var(--tx);}
+.chip.on{border-color:var(--am);color:var(--am);background:var(--am-bg);}
+
+/* ROLE CARD SELECT */
+.role-cards{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:10px;}
+.role-card{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px 14px;cursor:pointer;transition:all .15s;}
+.role-card:hover{border-color:var(--bd2);}
+.role-card.on{border-color:var(--am);background:var(--am-bg);}
+.rc-title{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:2px;}
+.rc-sub{font-size:10px;color:var(--tx3);}
+
+/* Opening style cards */
+.open-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.open-card{background:var(--bg2);border:1.5px solid var(--bd);border-radius:var(--r);padding:12px;cursor:pointer;transition:all .15s;text-align:center;}
+.open-card:hover{border-color:var(--bd2);}
+.open-card.on{border-color:var(--am);background:var(--am-bg);}
+.oc-icon{font-size:20px;margin-bottom:6px;display:block;}
+.oc-title{font-size:11px;font-weight:500;color:var(--tx);}
+.oc-sub{font-size:10px;color:var(--tx3);margin-top:2px;}
+
+/* FOOTER */
+.bridge-footer{display:flex;align-items:center;justify-content:space-between;margin-top:8px;}
+.bridge-skip{font-size:12px;color:var(--tx3);cursor:pointer;text-decoration:underline;text-underline-offset:3px;}
+.bridge-skip:hover{color:var(--tx2);}
+.btn-go{padding:12px 36px;background:var(--am);color:#1A1208;border:none;border-radius:40px;font-size:14px;font-weight:500;font-family:'Noto Sans JP',sans-serif;cursor:pointer;transition:all .2s;}
+.btn-go:hover{background:var(--am2);}
+
+/* RIGHT: live preview */
+.bridge-preview{background:var(--bg2);border-left:1px solid var(--bd);padding:32px 24px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+.bp-title{font-size:11px;font-weight:500;color:var(--tx3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:20px;}
+
+.bp-card{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rl);padding:18px;margin-bottom:14px;}
+.bp-card-label{font-size:10px;color:var(--am);font-weight:500;letter-spacing:.06em;margin-bottom:10px;}
+.bp-row{display:flex;flex-direction:column;gap:8px;}
+.bp-item{display:flex;flex-direction:column;gap:2px;}
+.bp-key{font-size:10px;color:var(--tx3);}
+.bp-val{font-size:12px;color:var(--tx2);line-height:1.5;}
+.bp-val.filled{color:var(--tx);}
+.bp-val.am{color:var(--am);}
+
+.bp-opening{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rl);padding:18px;flex:1;display:flex;flex-direction:column;}
+.bp-opening-label{font-size:10px;color:var(--am);font-weight:500;letter-spacing:.06em;margin-bottom:10px;}
+.bp-opening-text{font-family:'Noto Serif JP',serif;font-size:13px;color:var(--tx2);line-height:2;font-style:italic;flex:1;}
+
+/* ══════════ S3 EDITOR ══════════ */
+#s3{flex-direction:row;min-height:100vh;}
+
+.sidebar{width:218px;flex-shrink:0;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;overflow-y:auto;}
+.sb-logo{padding:18px 18px 14px;font-family:'Noto Serif JP',serif;font-size:12px;color:var(--tx3);letter-spacing:.1em;border-bottom:1px solid var(--bd);}
+.sb-story{padding:12px 18px;border-bottom:1px solid var(--bd);}
+.sb-title{font-size:12px;font-weight:500;color:var(--tx);margin-bottom:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.sb-genre{font-size:10px;color:var(--am);display:flex;align-items:center;gap:4px;}
+.sb-sec{padding:12px 18px;border-bottom:1px solid var(--bd);}
+.sb-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;}
+.sb-hd-title{font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.06em;text-transform:uppercase;}
+.sb-add{background:none;border:none;font-size:15px;color:var(--tx3);cursor:pointer;transition:color .15s;line-height:1;}
+.sb-add:hover{color:var(--am);}
+.char-item{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:var(--r);cursor:pointer;transition:background .15s;margin-bottom:2px;}
+.char-item:hover{background:var(--sf);}
+.char-av{width:24px;height:24px;border-radius:50%;background:var(--sf2);display:flex;align-items:center;justify-content:center;font-size:11px;color:var(--tx2);flex-shrink:0;}
+.char-nm{font-size:11px;color:var(--tx2);}
+.char-rl{font-size:10px;color:var(--tx3);}
+.sb-empty{font-size:11px;color:var(--tx3);font-style:italic;}
+
+.plot-mini{display:flex;flex-direction:column;gap:3px;}
+.pmi{font-size:10px;padding:5px 8px;border-radius:4px;background:var(--sf);color:var(--tx3);cursor:pointer;transition:all .15s;}
+.pmi:hover{color:var(--tx2);}
+.pmi.filled{color:var(--am);background:var(--am-bg);}
+
+.sb-progress{padding:12px 18px;}
+.prog-label{font-size:10px;color:var(--tx3);margin-bottom:8px;}
+.prog-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.prog-nm{font-size:10px;color:var(--tx2);width:46px;flex-shrink:0;}
+.prog-bar{flex:1;height:3px;background:var(--sf2);border-radius:2px;overflow:hidden;}
+.prog-fill{height:100%;background:var(--am);border-radius:2px;transition:width .5s ease;}
+
+/* CENTER */
+.ed-center{flex:1;display:flex;flex-direction:column;min-width:0;}
+.ed-top{height:50px;background:var(--bg);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 24px;gap:14px;position:sticky;top:0;z-index:50;}
+.ed-top-l{display:flex;align-items:center;gap:12px;flex:1;}
+.ed-top-r{display:flex;align-items:center;gap:10px;}
+.btn-back2{background:none;border:none;font-size:17px;color:var(--tx3);cursor:pointer;}
+.btn-back2:hover{color:var(--tx2);}
+.ed-wc{font-size:11px;color:var(--tx3);}
+.wc-n{color:var(--am);font-weight:500;}
+.ed-save{font-size:11px;color:var(--tx3);display:flex;align-items:center;gap:3px;}
+.ed-save::before{content:'●';font-size:7px;color:var(--gn);}
+.btn-draft{padding:6px 14px;background:transparent;border:1px solid var(--bd2);border-radius:6px;font-size:11px;color:var(--tx2);cursor:pointer;transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.btn-draft:hover{border-color:var(--bd);color:var(--tx);}
+
+/* SCENE CONTEXT — 4ブロック */
+.scene-ctx{background:var(--bg2);border-bottom:1px solid var(--bd);padding:0 24px;display:flex;align-items:stretch;}
+.ctx-blk{padding:10px 16px;display:flex;flex-direction:column;justify-content:center;border-right:1px solid var(--bd);flex-shrink:0;}
+.ctx-blk:first-child{padding-left:0;}
+.ctx-blk:last-child{border-right:none;margin-left:auto;justify-content:center;}
+.ctx-key{font-size:9px;color:var(--tx3);font-weight:500;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px;white-space:nowrap;}
+.ctx-val{font-size:11px;color:var(--tx2);max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.ctx-val.am{color:var(--am);}
+.ctx-val.em{color:var(--tx3);font-style:italic;}
+.ctx-edit-btn{font-size:10px;color:var(--tx3);cursor:pointer;text-decoration:underline;text-underline-offset:2px;white-space:nowrap;background:none;border:none;font-family:'Noto Sans JP',sans-serif;}
+.ctx-edit-btn:hover{color:var(--tx2);}
+
+/* WRITING */
+.writing-area{flex:1;overflow-y:auto;padding:44px 0;}
+.writing-inner{max-width:580px;margin:0 auto;padding:0 28px;}
+.ep-ti{font-family:'Noto Serif JP',serif;font-size:20px;font-weight:300;color:var(--tx);background:transparent;border:none;outline:none;width:100%;margin-bottom:28px;border-bottom:1px solid var(--bd);padding-bottom:16px;}
+.ep-ti::placeholder{color:var(--tx3);}
+
+.milestone-bar{display:none;background:var(--gn-bg);border:1px solid rgba(90,140,106,.3);border-radius:var(--r);padding:9px 14px;margin-bottom:16px;font-size:11px;color:var(--gn);align-items:center;gap:8px;animation:fadeUp .3s ease;}
+.milestone-bar.show{display:flex;}
+
+.writing-body{font-family:'Noto Serif JP',serif;font-size:16px;line-height:2.1;color:var(--tx);background:transparent;border:none;outline:none;width:100%;min-height:400px;resize:none;}
+.writing-body::placeholder{color:var(--tx3);font-size:13px;line-height:2;font-style:italic;}
+
+/* AI PANEL */
+.ai-panel{width:265px;flex-shrink:0;background:var(--bg2);border-left:1px solid var(--bd);height:100vh;position:sticky;top:0;display:flex;flex-direction:column;overflow:hidden;}
+.aip-hd{padding:14px 16px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between;}
+.aip-name{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--tx2);font-weight:500;}
+.aip-dot{width:7px;height:7px;border-radius:50%;background:var(--am);box-shadow:0 0 5px rgba(200,137,58,.5);animation:pulse 2s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.aip-body{flex:1;overflow-y:auto;padding:14px;}
+
+.ai-ctx{background:var(--sf);border:1px solid var(--bd2);border-radius:var(--rl);padding:12px;margin-bottom:12px;}
+.ai-ctx-label{font-size:9px;color:var(--am);font-weight:500;letter-spacing:.06em;margin-bottom:5px;}
+.ai-ctx-text{font-size:11px;color:var(--tx2);line-height:1.7;}
+.ai-ctx-act{font-size:10px;color:var(--tx3);margin-top:7px;cursor:pointer;display:flex;align-items:center;gap:3px;}
+.ai-ctx-act::before{content:'→';color:var(--am);}
+.ai-ctx-act:hover{color:var(--tx2);}
+
+.aip-sec{margin-bottom:14px;}
+.aip-sec-lbl{font-size:9px;color:var(--tx3);font-weight:500;letter-spacing:.06em;margin-bottom:6px;}
+.aip-btn{display:block;width:100%;text-align:left;padding:7px 11px;background:var(--bg3);border:1px solid var(--bd);border-radius:var(--r);font-size:11px;color:var(--tx2);cursor:pointer;margin-bottom:4px;transition:all .15s;font-family:'Noto Sans JP',sans-serif;}
+.aip-btn:hover{border-color:var(--am-bd);color:var(--tx);background:var(--sf);}
+
+.speed-row{display:flex;gap:4px;margin-bottom:12px;}
+.speed-c{flex:1;text-align:center;padding:4px 0;border-radius:5px;border:1px solid var(--bd);background:var(--bg3);font-size:10px;color:var(--tx3);cursor:pointer;transition:all .15s;}
+.speed-c.on{border-color:var(--am-bd);color:var(--am);background:var(--am-bg);}
+.gen-wrap{margin-bottom:12px;}
+.gen-top{display:flex;justify-content:space-between;font-size:9px;color:var(--tx3);margin-bottom:4px;}
+input[type=range]{width:100%;accent-color:var(--am);cursor:pointer;}
+
+.aip-chat{padding:12px;border-top:1px solid var(--bd);}
+.aip-row{display:flex;gap:7px;align-items:flex-end;}
+.aip-in{flex:1;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:7px 11px;font-size:11px;color:var(--tx);outline:none;resize:none;font-family:'Noto Sans JP',sans-serif;min-height:32px;transition:border-color .15s;}
+.aip-in:focus{border-color:var(--am-bd);}
+.aip-in::placeholder{color:var(--tx3);}
+.aip-send{width:30px;height:30px;background:var(--am);border:none;border-radius:5px;color:#1A1208;font-size:13px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:background .15s;}
+.aip-send:hover{background:var(--am2);}
+.aip-credit{font-size:9px;color:var(--tx3);text-align:center;margin-top:7px;}
+
+/* CHAR MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:center;justify-content:center;}
+.modal-bg.show{display:flex;animation:fadeIn .2s;}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--bg2);border:1px solid var(--bd2);border-radius:var(--rl);padding:28px;width:100%;max-width:460px;max-height:80vh;overflow-y:auto;animation:fadeUp .25s ease;}
+.modal-title{font-family:'Noto Serif JP',serif;font-size:17px;font-weight:400;color:var(--tx);margin-bottom:4px;}
+.modal-sub{font-size:11px;color:var(--tx3);margin-bottom:22px;}
+.m-field{margin-bottom:14px;}
+.m-lbl{font-size:10px;font-weight:500;color:var(--tx3);margin-bottom:5px;display:flex;align-items:center;gap:5px;}
+.opt{font-size:9px;color:var(--tx3);font-weight:400;}
+.m-in{width:100%;background:var(--bg3);border:1px solid var(--bd2);border-radius:var(--r);padding:9px 13px;font-size:12px;color:var(--tx);outline:none;transition:border-color .15s;font-family:'Noto Serif JP',serif;}
+.m-in:focus{border-color:var(--am-bd);}
+.m-in::placeholder{color:var(--tx3);font-size:11px;}
+.m-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.m-chip{padding:4px 11px;border-radius:20px;border:1px solid var(--bd2);background:var(--bg3);font-size:11px;color:var(--tx2);cursor:pointer;transition:all .15s;}
+.m-chip:hover{border-color:var(--am-bd);color:var(--tx);}
+.m-chip.on{border-color:var(--am);color:var(--am);background:var(--am-bg);}
+.m-acts{display:flex;justify-content:flex-end;gap:8px;margin-top:22px;}
+.btn-cancel{padding:8px 18px;background:transparent;border:1px solid var(--bd2);border-radius:var(--r);font-size:12px;color:var(--tx2);cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.btn-ok{padding:8px 24px;background:var(--am);border:none;border-radius:var(--r);font-size:12px;color:#1A1208;font-weight:500;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+.btn-ok:hover{background:var(--am2);}
+
+@media(max-width:960px){.sidebar{display:none;}.ai-panel{width:220px;}#s2.active{grid-template-columns:1fr 260px;}}
+@media(max-width:700px){.ai-panel{display:none;}.mood-grid{grid-template-columns:repeat(2,140px);}#s2.active{grid-template-columns:1fr;}.bridge-preview{display:none;}.open-cards{grid-template-columns:repeat(2,1fr);}.role-cards{grid-template-columns:1fr;}}
+</style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+<div class="achievement" id="ach">
+  <div class="ach-icon" id="achIco">🔥</div>
+  <div><div class="ach-label">ACHIEVEMENT</div><div class="ach-title" id="achT">—</div><div class="ach-sub" id="achS">—</div></div>
+</div>
+
+<!-- CHAR MODAL -->
+<div class="modal-bg" id="charModal">
+  <div class="modal">
+    <div class="modal-title">人物を呼ぶ</div>
+    <div class="modal-sub">名前と役割だけで大丈夫です。詳細は書きながら足せます。</div>
+    <div class="m-field"><div class="m-lbl">名前</div><input class="m-in" id="charName" placeholder="例：ルシアン（仮でも可）"></div>
+    <div class="m-field">
+      <div class="m-lbl">役割</div>
+      <div class="m-chips">
+        <div class="m-chip" onclick="this.classList.toggle('on')">主人公</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">相棒</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">ライバル</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">守る相手</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">対立者</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">謎の人物</div>
+      </div>
+    </div>
+    <div class="m-field"><div class="m-lbl">いちばん強い欲望 <span class="opt">（任意）</span></div><input class="m-in" placeholder="例：認められたい、居場所がほしい、復讐したい"></div>
+    <div class="m-field"><div class="m-lbl">いちばん怖れていること <span class="opt">（任意）</span></div><input class="m-in" placeholder="例：見捨てられること、秘密がばれること"></div>
+    <div class="m-field">
+      <div class="m-lbl">口調の雰囲気 <span class="opt">（任意）</span></div>
+      <div class="m-chips">
+        <div class="m-chip" onclick="this.classList.toggle('on')">ぶっきらぼう</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">丁寧</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">皮肉っぽい</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">まっすぐ</div>
+        <div class="m-chip" onclick="this.classList.toggle('on')">落ち着いている</div>
+      </div>
+    </div>
+    <div class="m-acts">
+      <button class="btn-cancel" onclick="closeCharModal()">閉じる</button>
+      <button class="btn-ok" onclick="saveChar()">この人物を呼ぶ</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════ S1: SPARK ═══════ -->
+<div class="screen active" id="s1">
+  <div class="logo">物語工房</div>
+  <h1 class="s1-head">どんな物語にする？</h1>
+  <p class="s1-sub">雰囲気を選んで、一言書いたら始められます。</p>
+
+  <div class="mood-grid">
+    <div class="mood-card m1" onclick="selectMood(this,'ダーク・ファンタジー')"><div class="mood-sym">🌙</div><div class="mood-lbl">ダーク</div><div class="mood-s2">ファンタジー</div></div>
+    <div class="mood-card m2" onclick="selectMood(this,'SF・近未来')"><div class="mood-sym">◈</div><div class="mood-lbl">SF・近未来</div><div class="mood-s2">テクノロジー</div></div>
+    <div class="mood-card m3" onclick="selectMood(this,'現代・日常')"><div class="mood-sym">☕</div><div class="mood-lbl">現代・日常</div><div class="mood-s2">ヒューマンドラマ</div></div>
+    <div class="mood-card m4" onclick="selectMood(this,'ミステリー')"><div class="mood-sym">🔍</div><div class="mood-lbl">ミステリー</div><div class="mood-s2">サスペンス</div></div>
+  </div>
+
+  <div class="spark-wrap">
+    <input class="spark-in" id="sparkIn" placeholder="どんな話？（一言でいい）— 例：記憶を失った少女が王都で真実を探す話">
+    <div class="spark-hint">あとから変えられます。思いつきで大丈夫。</div>
+  </div>
+
+  <div class="spark-actions">
+    <button class="btn-lg" onclick="goToBridge()">次へ →</button>
+    <div class="spark-or">または</div>
+    <button class="btn-ghost-pill" onclick="goToBridgeAI()">AIに相談しながら決める</button>
+    <span class="spark-link" onclick="skipToEditor()">何も決めずにエディタへ</span>
+  </div>
+</div>
+
+
+<!-- ═══════ S2: BRIDGE ═══════ -->
+<div class="screen" id="s2">
+
+  <!-- LEFT: Design steps -->
+  <div class="bridge-main">
+    <button class="bridge-back" onclick="show('s1')">S1に戻る</button>
+
+    <h2 class="bridge-head">第1話の設計をする</h2>
+    <p class="bridge-sub">書き始める前に足場を作りましょう。<br>全部埋めなくていいです。決まったところだけ進めてください。</p>
+
+    <!-- BLOCK 1: 主人公 -->
+    <div class="design-block">
+      <div class="db-num">01 / 主人公</div>
+      <div class="db-title">誰の話か</div>
+      <div class="db-desc">名前と、この人物が何を求めているかだけ決めると書きやすくなります。</div>
+      <div class="db-2col">
+        <div>
+          <div class="db-field-label">名前（仮でも可）</div>
+          <input class="db-input" id="heroName" placeholder="例：ルシアン">
+        </div>
+        <div>
+          <div class="db-field-label">役割</div>
+          <input class="db-input" id="heroRole" placeholder="例：主人公、相棒">
+        </div>
+      </div>
+      <div style="margin-bottom:10px">
+        <div class="db-field-label">いちばん強い欲望</div>
+        <input class="db-input" id="heroDrive" placeholder="例：認められたい　/ 居場所がほしい　/ 失ったものを取り戻したい" style="width:100%">
+      </div>
+      <div>
+        <div class="db-field-label">いちばん怖れていること</div>
+        <input class="db-input" id="heroFear" placeholder="例：見捨てられること　/ 秘密がばれること" style="width:100%">
+      </div>
+    </div>
+
+    <!-- BLOCK 2: 第1話の役割 -->
+    <div class="design-block">
+      <div class="db-num">02 / 第1話の役割</div>
+      <div class="db-title">この話で何を起こすか</div>
+      <div class="db-desc">まず最初の話が物語の中でどんな機能を持つかを決めます。</div>
+      <div class="role-cards" id="roleCards">
+        <div class="role-card" onclick="pickRole(this,'日常と違和感')"><div class="rc-title">日常と違和感を置く</div><div class="rc-sub">主人公の普通の生活に小さな歪みを入れる</div></div>
+        <div class="role-card" onclick="pickRole(this,'事件の発生')"><div class="rc-title">事件を起こす</div><div class="rc-sub">物語を動かす出来事をいきなり置く</div></div>
+        <div class="role-card" onclick="pickRole(this,'出会いと関係の始まり')"><div class="rc-title">出会いを描く</div><div class="rc-sub">重要な関係が始まる瞬間を丁寧に書く</div></div>
+        <div class="role-card" onclick="pickRole(this,'謎の提示')"><div class="rc-title">謎だけを置く</div><div class="rc-sub">答えを出さず、問いだけを残して引く</div></div>
+      </div>
+    </div>
+
+    <!-- BLOCK 3: 感情の流れ -->
+    <div class="design-block">
+      <div class="db-num">03 / 感情の流れ</div>
+      <div class="db-title">読者の感情をどう動かすか</div>
+      <div class="db-desc">この話を通じて、読者の気持ちをどう変化させたいか選んでください。</div>
+      <div class="chip-group" id="emoChips">
+        <div class="chip" onclick="this.classList.toggle('on')">静 → 不穏</div>
+        <div class="chip" onclick="this.classList.toggle('on')">平穏 → 驚き</div>
+        <div class="chip" onclick="this.classList.toggle('on')">緊張 → 一瞬の安堵</div>
+        <div class="chip" onclick="this.classList.toggle('on')">孤独 → 温かさ</div>
+        <div class="chip" onclick="this.classList.toggle('on')">期待 → 違和感</div>
+        <div class="chip" onclick="this.classList.toggle('on')">混乱 → 決意</div>
+      </div>
+    </div>
+
+    <!-- BLOCK 4: 隠すもの -->
+    <div class="design-block">
+      <div class="db-num">04 / 隠すもの</div>
+      <div class="db-title">読者にまだ見せないもの</div>
+      <div class="db-desc">第1話で伏せておく情報を決めると、続きを読む理由が生まれます。</div>
+      <input class="db-input" id="hideInfo" placeholder="例：主人公の喪失の原因　/ 相棒の本当の目的　/ 世界の秘密" style="width:100%">
+    </div>
+
+    <!-- BLOCK 5: 冒頭の入り方 -->
+    <div class="design-block">
+      <div class="db-num">05 / 冒頭</div>
+      <div class="db-title">どこから書き始めるか</div>
+      <div class="db-desc">冒頭の入り方を一つ選ぶと、最初の一文が書きやすくなります。</div>
+      <div class="open-cards" id="openCards">
+        <div class="open-card" onclick="pickOpen(this,'情景描写')"><span class="oc-icon">🌆</span><div class="oc-title">情景描写から</div><div class="oc-sub">場所の空気を最初に置く</div></div>
+        <div class="open-card" onclick="pickOpen(this,'会話')"><span class="oc-icon">💬</span><div class="oc-title">会話から</div><div class="oc-sub">セリフで引き込む</div></div>
+        <div class="open-card" onclick="pickOpen(this,'心理描写')"><span class="oc-icon">💭</span><div class="oc-title">心理描写から</div><div class="oc-sub">主人公の内面を先に見せる</div></div>
+        <div class="open-card" onclick="pickOpen(this,'事件の瞬間')"><span class="oc-icon">⚡</span><div class="oc-title">事件の瞬間から</div><div class="oc-sub">いきなり核心から入る</div></div>
+        <div class="open-card ai-card" onclick="pickOpen(this,'AI生成')"><span class="oc-icon">✦</span><div class="oc-title">AIに書いてもらう</div><div class="oc-sub">設定をもとに草稿を生成</div></div>
+      </div>
+    </div>
+
+    <div class="bridge-footer">
+      <span class="bridge-skip" onclick="skipToEditor()">設計をとばして書き始める</span>
+      <button class="btn-go" onclick="goToEditor()">書き始める →</button>
+    </div>
+  </div>
+
+  <!-- RIGHT: Live preview -->
+  <div class="bridge-preview">
+    <div class="bp-title">いまの設計</div>
+
+    <div class="bp-card">
+      <div class="bp-card-label">物語の骨格</div>
+      <div class="bp-row">
+        <div class="bp-item"><div class="bp-key">ジャンル</div><div class="bp-val" id="prev-mood">—</div></div>
+        <div class="bp-item"><div class="bp-key">コンセプト</div><div class="bp-val" id="prev-concept">—</div></div>
+      </div>
+    </div>
+
+    <div class="bp-card">
+      <div class="bp-card-label">主人公</div>
+      <div class="bp-row">
+        <div class="bp-item"><div class="bp-key">名前</div><div class="bp-val" id="prev-name">—</div></div>
+        <div class="bp-item"><div class="bp-key">欲望</div><div class="bp-val" id="prev-drive">—</div></div>
+        <div class="bp-item"><div class="bp-key">恐れ</div><div class="bp-val" id="prev-fear">—</div></div>
+      </div>
+    </div>
+
+    <div class="bp-card">
+      <div class="bp-card-label">第1話の設計</div>
+      <div class="bp-row">
+        <div class="bp-item"><div class="bp-key">役割</div><div class="bp-val" id="prev-role">—</div></div>
+        <div class="bp-item"><div class="bp-key">感情の流れ</div><div class="bp-val" id="prev-emo">—</div></div>
+        <div class="bp-item"><div class="bp-key">隠すもの</div><div class="bp-val" id="prev-hide">—</div></div>
+        <div class="bp-item"><div class="bp-key">冒頭</div><div class="bp-val" id="prev-open">—</div></div>
+      </div>
+    </div>
+
+    <div class="bp-opening" id="openingPreview" style="display:none">
+      <div class="bp-opening-label">冒頭のイメージ</div>
+      <div class="bp-opening-text" id="openingText">—</div>
+    </div>
+  </div>
+
+</div>
+
+
+<!-- ═══════ S3: EDITOR ═══════ -->
+<div class="screen" id="s3">
+
+  <div class="sidebar">
+    <div class="sb-logo">物語工房</div>
+    <div class="sb-story"><div class="sb-title" id="sbTitle">新しい物語</div><div class="sb-genre" id="sbGenre"><span>✦</span><span>ジャンル未設定</span></div></div>
+    <div class="sb-sec">
+      <div class="sb-hd"><div class="sb-hd-title">登場人物</div><button class="sb-add" onclick="openCharModal()">＋</button></div>
+      <div id="charList"><div class="sb-empty">まだいません</div></div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-hd"><div class="sb-hd-title">世界設定</div><button class="sb-add" onclick="toast('世界設定（実装予定）')">＋</button></div>
+      <div class="sb-empty">まだありません</div>
+    </div>
+    <div class="sb-sec">
+      <div class="sb-hd"><div class="sb-hd-title">プロット</div><button class="sb-add" onclick="show('s2')">＋</button></div>
+      <div class="plot-mini">
+        <div class="pmi" id="pmi-ki">起 — <span id="pmi-ki-t">未設定</span></div>
+        <div class="pmi">承 — <span style="color:var(--tx3)">未設定</span></div>
+        <div class="pmi">転 — <span style="color:var(--tx3)">未設定</span></div>
+        <div class="pmi">結 — <span style="color:var(--tx3)">未設定</span></div>
+      </div>
+    </div>
+    <div class="sb-progress">
+      <div class="prog-label">作品の育ち具合</div>
+      <div class="prog-item"><div class="prog-nm">執筆量</div><div class="prog-bar"><div class="prog-fill" id="pg-w" style="width:0%"></div></div></div>
+      <div class="prog-item"><div class="prog-nm">登場人物</div><div class="prog-bar"><div class="prog-fill" id="pg-c" style="width:0%"></div></div></div>
+      <div class="prog-item"><div class="prog-nm">世界観</div><div class="prog-bar"><div class="prog-fill" id="pg-wr" style="width:0%"></div></div></div>
+      <div class="prog-item"><div class="prog-nm">プロット</div><div class="prog-bar"><div class="prog-fill" id="pg-p" style="width:0%"></div></div></div>
+    </div>
+  </div>
+
+  <div class="ed-center">
+    <div class="ed-top">
+      <div class="ed-top-l">
+        <button class="btn-back2" onclick="show('s2')">←</button>
+        <div class="ed-wc"><span class="wc-n" id="wcNum">0</span> 字</div>
+        <div class="ed-save">自動保存済み</div>
+      </div>
+      <div class="ed-top-r">
+        <button class="btn-draft" onclick="toast('下書きを保存しました')">下書きを保存</button>
+      </div>
+    </div>
+
+    <!-- SCENE CONTEXT (4ブロック、充実) -->
+    <div class="scene-ctx">
+      <div class="ctx-blk">
+        <div class="ctx-key">話数</div>
+        <div class="ctx-val am">第1話</div>
+      </div>
+      <div class="ctx-blk">
+        <div class="ctx-key">この話の役割</div>
+        <div class="ctx-val" id="ctxRole">—</div>
+      </div>
+      <div class="ctx-blk">
+        <div class="ctx-key">感情の流れ</div>
+        <div class="ctx-val" id="ctxEmo">—</div>
+      </div>
+      <div class="ctx-blk">
+        <div class="ctx-key">まだ隠すもの</div>
+        <div class="ctx-val" id="ctxHide">—</div>
+      </div>
+      <div class="ctx-blk">
+        <button class="ctx-edit-btn" onclick="show('s2')">設計を変更</button>
+      </div>
+    </div>
+
+    <div class="writing-area">
+      <div class="writing-inner">
+        <input class="ep-ti" placeholder="エピソードタイトル（仮でも可）">
+        <div class="milestone-bar" id="milebar"><span>🔥</span><span id="mileTxt">—</span></div>
+        <textarea class="writing-body" id="writingBody" rows="20"
+          placeholder="書き始めてください。完璧じゃなくていいです。&#10;&#10;— 右の相棒がいつでも手伝います。"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="ai-panel">
+    <div class="aip-hd">
+      <div class="aip-name"><div class="aip-dot"></div>相棒</div>
+      <span style="font-size:10px;color:var(--tx3);cursor:pointer">履歴</span>
+    </div>
+    <div class="aip-body">
+      <div class="ai-ctx">
+        <div class="ai-ctx-label">この場面のヒント</div>
+        <div class="ai-ctx-text" id="aiHint">設計内容をもとに、ここに場面固有のヒントが表示されます。</div>
+        <div class="ai-ctx-act" onclick="toast('このヒントで書いてみます')">このヒントで書いてみる</div>
+      </div>
+
+      <div class="aip-sec">
+        <div class="aip-sec-lbl">生成スピード</div>
+        <div class="speed-row">
+          <div class="speed-c" onclick="pickSpeed(this)">通常</div>
+          <div class="speed-c on" onclick="pickSpeed(this)">じっくり</div>
+          <div class="speed-c" onclick="pickSpeed(this)">高精度</div>
+        </div>
+        <div class="gen-wrap">
+          <div class="gen-top"><span>生成文字数</span><span id="genLen">1,000字</span></div>
+          <input type="range" min="100" max="5000" value="1000" oninput="document.getElementById('genLen').textContent=Number(this.value).toLocaleString()+'字'">
+        </div>
+      </div>
+
+      <div class="aip-sec">
+        <div class="aip-sec-lbl">今できること</div>
+        <button class="aip-btn" onclick="toast('冒頭を生成中...')">冒頭を作る</button>
+        <button class="aip-btn" onclick="toast('続きを生成中...')">この続きを書く</button>
+        <button class="aip-btn" onclick="toast('文章を整えています...')">文章を整える</button>
+        <button class="aip-btn" onclick="toast('文体を統一中...')">文体をそろえる</button>
+      </div>
+
+      <div class="aip-sec">
+        <div class="aip-sec-lbl">強化する</div>
+        <button class="aip-btn" onclick="toast('シーン描写を強化中...')">シーン描写を強くする</button>
+        <button class="aip-btn" onclick="toast('会話を改善中...')">会話を自然にする</button>
+        <button class="aip-btn" onclick="toast('感情を深めています...')">感情をもっと深める</button>
+      </div>
+
+      <div class="aip-sec">
+        <div class="aip-sec-lbl">設定を足す</div>
+        <button class="aip-btn" onclick="openCharModal()">人物を呼ぶ</button>
+        <button class="aip-btn" onclick="show('s2')">1話の設計を変える</button>
+      </div>
+    </div>
+    <div class="aip-chat">
+      <div class="aip-row">
+        <textarea class="aip-in" placeholder="相棒への指示…" rows="2"></textarea>
+        <button class="aip-send" onclick="toast('相棒が考えています...')">→</button>
+      </div>
+      <div class="aip-credit">0cr · Pro · <span style="color:var(--am);cursor:pointer" onclick="toast('プランページへ')">プランを確認</span></div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// STATE
+let mood='', concept='', selectedRole='', selectedOpen='';
+let chars=[], wc=0;
+let miles={100:false,300:false,500:false,1000:false};
+const mileD={
+  100:{i:'📝',t:'物語が動き出した',s:'最初の100文字'},
+  300:{i:'🔥',t:'勢いがついてきた',s:'300文字突破'},
+  500:{i:'✨',t:'場面が立ち上がった',s:'500文字達成'},
+  1000:{i:'📖',t:'一つの世界が生まれた',s:'1,000文字達成'},
+};
+
+// SCREEN
+function show(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0,0);
+}
+
+// S1
+function selectMood(el,label){
+  document.querySelectorAll('.mood-card').forEach(c=>c.classList.remove('sel'));
+  el.classList.add('sel'); mood=label;
+}
+
+function goToBridge(){
+  concept=document.getElementById('sparkIn').value.trim();
+  setPreview('prev-mood', mood||'—');
+  setPreview('prev-concept', concept||'—');
+  if(mood) document.getElementById('sbGenre').innerHTML='<span>✦</span><span>'+mood+'</span>';
+  show('s2');
+}
+
+function goToBridgeAI(){ goToBridge(); }
+
+function skipToEditor(){
+  concept=document.getElementById('sparkIn').value.trim();
+  if(mood) document.getElementById('sbGenre').innerHTML='<span>✦</span><span>'+mood+'</span>';
+  finalizeEditor();
+  show('s3');
+}
+
+// S2 BRIDGE — live preview updates
+function setPreview(id, val, filled){
+  const el=document.getElementById(id);
+  if(!el) return;
+  el.textContent = val;
+  el.className = 'bp-val' + (filled||val!=='—' ? ' filled' : '');
+}
+
+// Live update on input
+document.addEventListener('DOMContentLoaded', ()=>{
+  ['heroName','heroRole','heroDrive','heroFear','hideInfo'].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input', updatePreview);
+  });
+  document.getElementById('writingBody').addEventListener('input', updateWC);
+});
+
+function updatePreview(){
+  setPreview('prev-name',  document.getElementById('heroName').value||'—');
+  setPreview('prev-drive', document.getElementById('heroDrive').value||'—');
+  setPreview('prev-fear',  document.getElementById('heroFear').value||'—');
+  setPreview('prev-hide',  document.getElementById('hideInfo').value||'—');
+  // emo chips
+  const emos=[...document.querySelectorAll('#emoChips .chip.on')].map(c=>c.textContent);
+  setPreview('prev-emo', emos.length?emos.join('・'):'—');
+  updateOpeningPreview();
+}
+
+function pickRole(el, label){
+  document.querySelectorAll('#roleCards .role-card').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); selectedRole=label;
+  setPreview('prev-role', label);
+  updateAIHint();
+  updateOpeningPreview();
+}
+
+function pickOpen(el, label){
+  document.querySelectorAll('#openCards .open-card').forEach(c=>c.classList.remove('on'));
+  el.classList.add('on'); selectedOpen=label;
+  setPreview('prev-open', label);
+  updateOpeningPreview();
+}
+
+// Opening preview generation
+const openingExamples={
+  '情景描写': '　霧が晴れない朝だった。\n　{name}は石畳の上に長い影を落としながら、誰も待っていない扉の前に立っていた。',
+  '会話': '「また来たのか」\n　声がした。振り向くと、{name}の知らない顔があった。',
+  '心理描写': '　{drive}——それだけを思って、{name}はずっと生きてきた。\n　だが今日、それが揺らいだ。',
+  '事件の瞬間': '　走れ、と誰かが叫んだ。\n　{name}が振り返った時にはもう、すべてが始まっていた。',
+  'AI生成': '　（AIが設定をもとに冒頭を生成します）',
+};
+
+function updateOpeningPreview(){
+  if(!selectedOpen) return;
+  const name = document.getElementById('heroName').value||'主人公';
+  const drive = document.getElementById('heroDrive').value||'何か';
+  let tmpl = openingExamples[selectedOpen]||'';
+  tmpl = tmpl.replace(/{name}/g,name).replace(/{drive}/g,drive);
+  document.getElementById('openingText').textContent = tmpl||'—';
+  document.getElementById('openingPreview').style.display='flex';
+  document.getElementById('openingPreview').style.flexDirection='column';
+}
+
+function updateAIHint(){
+  const hints={
+    '日常と違和感': '日常を描くとき、「いつもと同じ」に一つだけ小さな歪みを混ぜると、読者は不安になりながら読み続けます。',
+    '事件の発生': '事件は「何かが壊れる瞬間」です。その直前の静けさを短く描くと、落差が効きます。',
+    '出会いと関係の始まり': '最初の出会いは第一印象が全てです。どう見えるかより、何を感じさせるかで書いてみてください。',
+    '謎の提示': '謎は答えより問いの鮮度が大事です。「なぜ？」と思わせる瞬間を一つだけ置いて終わると強いです。',
+  };
+  const h=hints[selectedRole];
+  if(h) document.getElementById('aiHint').textContent=h;
+}
+
+// GO TO EDITOR
+function goToEditor(){
+  // Push design → scene context
+  const role=selectedRole||'—';
+  const emos=[...document.querySelectorAll('#emoChips .chip.on')].map(c=>c.textContent);
+  const emo=emos.length?emos.join('・'):'—';
+  const hide=document.getElementById('hideInfo').value||'—';
+  finalizeEditor(role,emo,hide);
+
+  // Push character
+  const heroName=document.getElementById('heroName').value.trim();
+  if(heroName){ addChar(heroName, document.getElementById('heroRole').value||'主人公'); }
+
+  // Plot mini
+  if(role!=='—'){
+    document.getElementById('pmi-ki-t').textContent=role.substring(0,8);
+    document.getElementById('pmi-ki').classList.add('filled');
+    document.getElementById('pg-p').style.width='20%';
+  }
+
+  show('s3');
+
+  if(selectedOpen==='AI生成'){
+    setTimeout(startWithAI, 400);
+  } else {
+    setTimeout(()=>document.getElementById('writingBody').focus(), 300);
+  }
+}
+
+function finalizeEditor(role,emo,hide){
+  document.getElementById('ctxRole').textContent=role||'—';
+  document.getElementById('ctxEmo').textContent=emo||'—';
+  document.getElementById('ctxHide').textContent=hide||'—';
+  if(mood) document.getElementById('sbGenre').innerHTML='<span>✦</span><span>'+mood+'</span>';
+}
+
+// AI writing
+function startWithAI(){
+  const body=document.getElementById('writingBody');
+  const name=document.getElementById('heroName').value||'主人公';
+  const tmpl=openingExamples[selectedOpen]||openingExamples['情景描写'];
+  const drive=document.getElementById('heroDrive').value||'何か';
+  const text=tmpl.replace(/{name}/g,name).replace(/{drive}/g,drive)+'\n\n　';
+  typeText(body,text,22);
+}
+
+function typeText(el,text,delay){
+  let i=0;
+  function step(){ if(i<text.length){ el.value+=text[i++]; updateWC(); setTimeout(step,delay); } }
+  step();
+}
+
+// WORD COUNT
+function updateWC(){
+  const txt=document.getElementById('writingBody').value.replace(/\s/g,'');
+  wc=txt.length;
+  document.getElementById('wcNum').textContent=wc.toLocaleString();
+  document.getElementById('pg-w').style.width=Math.min(wc/2000*100,100)+'%';
+  for(const [n,fired] of Object.entries(miles)){
+    if(!fired&&wc>=n){ miles[n]=true; showAch(mileD[n]); showMile(mileD[n].t); }
+  }
+}
+
+function showAch(d){
+  document.getElementById('achIco').textContent=d.i;
+  document.getElementById('achT').textContent=d.t;
+  document.getElementById('achS').textContent=d.s;
+  const el=document.getElementById('ach');
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),3500);
+}
+
+function showMile(t){
+  const el=document.getElementById('milebar');
+  document.getElementById('mileTxt').textContent=t;
+  el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),4000);
+}
+
+// CHAR MODAL
+function openCharModal(){ document.getElementById('charModal').classList.add('show'); document.getElementById('charName').focus(); }
+function closeCharModal(){ document.getElementById('charModal').classList.remove('show'); }
+function saveChar(){
+  const name=document.getElementById('charName').value.trim()||'名無し';
+  const role=document.querySelector('#charModal .m-chip.on')?.textContent||'—';
+  addChar(name,role);
+  closeCharModal();
+  document.getElementById('charName').value='';
+  document.querySelectorAll('#charModal .m-chip').forEach(c=>c.classList.remove('on'));
+  toast('「'+name+'」が物語に加わりました');
+}
+function addChar(name,role){
+  chars.push({name,role});
+  const list=document.getElementById('charList');
+  list.querySelector('.sb-empty')?.remove();
+  const el=document.createElement('div');
+  el.className='char-item';
+  el.innerHTML=`<div class="char-av">${name[0]}</div><div><div class="char-nm">${name}</div><div class="char-rl">${role}</div></div>`;
+  list.appendChild(el);
+  document.getElementById('pg-c').style.width=Math.min(chars.length*25,100)+'%';
+}
+
+// UTILS
+function pickSpeed(el){document.querySelectorAll('.speed-c').forEach(c=>c.classList.remove('on'));el.classList.add('on');}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
+</script>
+</body>
+</html>
