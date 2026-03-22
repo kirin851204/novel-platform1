@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>物語工房 — 課金・ポイント設計書</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #FAFAF8;
+  --bg2: #F4F2EE;
+  --bg3: #ECEAE4;
+  --bd: #E0DDD6;
+  --bd2: #C8C4BC;
+  --tx: #1E1C18;
+  --tx2: #5A5650;
+  --tx3: #9A9690;
+  --am: #9B6B20;
+  --am-bg: #FDF5E6;
+  --am-bd: #E8C882;
+  --gn: #2D6A3F;
+  --gn-bg: #EBF5EE;
+  --gn-bd: #A8D4B4;
+  --tl: #1A7A6A;
+  --tl-bg: #E4F5F2;
+  --tl-bd: #8FCFC6;
+  --pu: #4A3FA0;
+  --pu-bg: #EEEDFE;
+  --pu-bd: #CECBF6;
+  --rd: #8B3A3A;
+  --rd-bg: #FBEAEA;
+  --r: 6px; --rl: 10px;
+  --font-serif: 'Noto Serif JP', serif;
+  --font-sans: 'Noto Sans JP', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); background: var(--bg); color: var(--tx); font-size: 13px; line-height: 1.7; }
+.page { max-width: 960px; margin: 0 auto; padding: 48px 32px 80px; }
+
+/* ── HEADER ── */
+.doc-header { margin-bottom: 48px; padding-bottom: 24px; border-bottom: 2px solid var(--tx); }
+.doc-title { font-family: var(--font-serif); font-size: 28px; font-weight: 400; color: var(--tx); letter-spacing: .04em; margin-bottom: 6px; }
+.doc-meta { font-size: 12px; color: var(--tx3); display: flex; gap: 20px; }
+
+/* ── SECTION ── */
+.section { margin-bottom: 48px; }
+.section-title { font-family: var(--font-serif); font-size: 18px; font-weight: 400; color: var(--tx); letter-spacing: .03em; margin-bottom: 4px; padding-bottom: 10px; border-bottom: 1px solid var(--bd2); display: flex; align-items: center; gap: 10px; }
+.section-num { font-size: 11px; color: var(--tx3); font-family: var(--font-mono); }
+.section-sub { font-size: 12px; color: var(--tx3); margin-bottom: 20px; margin-top: 4px; }
+
+/* ── USER BLOCK ── */
+.user-block { margin-bottom: 28px; }
+.user-label { display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: var(--r); margin-bottom: 12px; }
+.ul-writer { background: var(--gn-bg); border: 1px solid var(--gn-bd); }
+.ul-reader { background: var(--pu-bg); border: 1px solid var(--pu-bd); }
+.ul-icon { font-size: 16px; }
+.ul-name { font-size: 13px; font-weight: 500; }
+.ul-writer .ul-name { color: var(--gn); }
+.ul-reader .ul-name { color: var(--pu); }
+.ul-desc { font-size: 11px; margin-left: auto; }
+.ul-writer .ul-desc { color: var(--gn); }
+.ul-reader .ul-desc { color: var(--pu); }
+
+/* ── JOURNEY MAP ── */
+.jmap { width: 100%; overflow-x: auto; }
+.jmap-inner { min-width: 800px; }
+.jmap-grid { display: grid; grid-template-columns: 100px repeat(5, 1fr); gap: 6px; margin-bottom: 6px; }
+.jmap-phase-row { display: grid; grid-template-columns: 100px repeat(5, 1fr); gap: 6px; margin-bottom: 10px; }
+.phase-cell { text-align: center; padding: 8px 4px; border-radius: var(--r); background: var(--bg2); border: 1px solid var(--bd); }
+.phase-num { font-size: 10px; color: var(--tx3); font-family: var(--font-mono); }
+.phase-name { font-size: 12px; font-weight: 500; color: var(--tx); }
+.phase-sub { font-size: 10px; color: var(--tx3); }
+.row-label { font-size: 10px; color: var(--tx3); text-align: right; padding-right: 8px; display: flex; align-items: center; justify-content: flex-end; line-height: 1.4; }
+.map-cell { border-radius: var(--r); padding: 8px; border: 1px solid transparent; min-height: 60px; }
+.mc-free { background: var(--bg2); border-color: var(--bd); }
+.mc-empty { background: transparent; border-color: transparent; }
+.mc-tag { font-size: 10px; color: var(--tx3); text-align: center; padding-top: 12px; font-style: italic; }
+
+/* ── TOUCH POINT CARD ── */
+.tp { border-radius: var(--r); padding: 8px 10px; border: 1.5px solid; margin-bottom: 5px; }
+.tp:last-child { margin-bottom: 0; }
+/* 有料PTを払う（アンバー・実線） */
+.tp-pay-paid { background: var(--am-bg); border-color: var(--am-bd); }
+.tp-pay-paid .tp-title { color: #412402; }
+.tp-pay-paid .tp-sub   { color: #633806; }
+/* 無料PT優先で払う（ティール・実線） */
+.tp-pay-free { background: var(--tl-bg); border-color: var(--tl-bd); }
+.tp-pay-free .tp-title { color: #0D4A3E; }
+.tp-pay-free .tp-sub   { color: #1A5E50; }
+/* 無料PT（行動）をもらう 作家（グリーン破線） */
+.tp-earn-w { background: var(--gn-bg); border-color: var(--gn-bd); border-style: dashed; }
+.tp-earn-w .tp-title { color: #173404; }
+.tp-earn-w .tp-sub   { color: #27500A; }
+/* 無料PT（行動）をもらう 読者（パープル破線） */
+.tp-earn-r { background: var(--pu-bg); border-color: var(--pu-bd); border-style: dashed; }
+.tp-earn-r .tp-title { color: #26215C; }
+.tp-earn-r .tp-sub   { color: #3C3489; }
+.tp-title { font-size: 11px; font-weight: 500; margin-bottom: 3px; }
+.tp-sub { font-size: 10px; line-height: 1.4; }
+.badges { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.badge { font-size: 9px; padding: 1px 6px; border-radius: 8px; font-weight: 500; white-space: nowrap; }
+.b-pay-paid { background: #E8C882; color: #412402; }
+.b-pay-free { background: #8FCFC6; color: #0D4A3E; }
+.b-earn-w   { background: #639922; color: #fff; }
+.b-earn-r   { background: #7F77DD; color: #fff; }
+
+/* ── TABLE ── */
+table { width: 100%; border-collapse: collapse; font-size: 12px; }
+th { font-size: 10px; font-weight: 500; color: var(--tx2); letter-spacing: .06em; text-transform: uppercase; padding: 8px 12px; text-align: left; border-bottom: 2px solid var(--bd2); background: var(--bg2); }
+td { padding: 9px 12px; border-bottom: 1px solid var(--bd); vertical-align: top; color: var(--tx); }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--bg2); }
+td:first-child { font-weight: 500; }
+.ok { color: var(--gn); font-weight: 500; }
+.ng { color: var(--tx3); }
+.pt-large { background: #C0DD97; color: #173404; }
+.pt-mid   { background: #FAC775; color: #412402; }
+.pt-small { background: #E0DDD6; color: #3A3830; }
+.pt-badge { font-size: 9px; padding: 2px 8px; border-radius: 8px; font-weight: 500; white-space: nowrap; display: inline-block; }
+
+/* ── PLAN CARDS ── */
+.plan-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.plan-card { border-radius: var(--rl); border: 1.5px solid var(--bd); padding: 18px 16px; background: var(--bg); }
+.plan-card.highlight { border-color: var(--am-bd); background: var(--am-bg); }
+.plan-tier { font-size: 9px; font-weight: 500; letter-spacing: .08em; text-transform: uppercase; margin-bottom: 6px; display: inline-block; padding: 2px 8px; border-radius: 8px; }
+.tier-free { background: var(--bg3); color: var(--tx3); }
+.tier-light { background: var(--gn-bg); color: var(--gn); border: 1px solid var(--gn-bd); }
+.tier-std { background: var(--pu-bg); color: var(--pu); border: 1px solid var(--pu-bd); }
+.tier-pro { background: var(--am-bg); color: var(--am); border: 1px solid var(--am-bd); }
+.plan-name { font-size: 15px; font-weight: 500; color: var(--tx); margin-bottom: 4px; }
+.plan-price { font-size: 22px; font-weight: 500; color: var(--tx); margin-bottom: 2px; }
+.plan-price span { font-size: 11px; font-weight: 400; color: var(--tx3); }
+.plan-pt { font-size: 12px; color: var(--tx2); margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--bd); }
+.plan-pt strong { color: var(--tx); }
+.plan-pt .reset { font-size: 10px; color: var(--tx3); }
+.plan-feat { font-size: 11px; color: var(--tx2); margin-bottom: 4px; display: flex; gap: 5px; }
+.plan-feat .ok { color: var(--gn); }
+.plan-feat .ng { color: var(--tx3); }
+
+/* ── PAYG ── */
+.payg-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.payg-item { background: var(--bg2); border: 1px solid var(--bd); border-radius: var(--r); padding: 12px; text-align: center; }
+.payg-pt { font-size: 18px; font-weight: 500; color: var(--tx); }
+.payg-pt span { font-size: 11px; font-weight: 400; color: var(--tx3); }
+.payg-price { font-size: 13px; color: var(--tx2); margin-top: 3px; }
+.payg-bonus { font-size: 10px; color: var(--gn); margin-top: 3px; font-weight: 500; }
+
+/* ── WALLET ── */
+.wallet-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+.wallet-card { background: var(--bg2); border: 1.5px solid var(--bd2); border-radius: var(--rl); padding: 18px; }
+.wallet-card.paid { border-color: var(--am-bd); background: var(--am-bg); }
+.wallet-card.free { border-color: var(--gn-bd); background: var(--gn-bg); }
+.wc-title { font-size: 13px; font-weight: 500; color: var(--tx); margin-bottom: 10px; }
+.wc-row { font-size: 11px; color: var(--tx2); margin-bottom: 5px; display: flex; gap: 6px; }
+.wc-ok { color: var(--gn); }
+.wc-ng { color: var(--rd); }
+
+.code-block { background: #1E1C18; border-radius: var(--rl); padding: 20px; overflow-x: auto; }
+.code-block pre { font-family: var(--font-mono); font-size: 12px; color: #C8C4BC; line-height: 1.8; white-space: pre; }
+.code-kw { color: #E8A855; }
+.code-type { color: #9FD3A8; }
+.code-str { color: #FAC775; }
+.code-cm { color: #6A665E; }
+
+/* ── FLOW ── */
+.flow-box { background: var(--bg2); border: 1px solid var(--bd2); border-radius: var(--rl); padding: 18px 20px; }
+.flow-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.flow-row:last-child { margin-bottom: 0; }
+.flow-block { border-radius: var(--r); padding: 7px 12px; font-size: 11px; font-weight: 500; }
+.fb-r { background: var(--pu-bg); border: 1px solid var(--pu-bd); color: #26215C; }
+.fb-w { background: var(--gn-bg); border: 1px solid var(--gn-bd); color: #173404; }
+.fb-p { background: var(--am-bg); border: 1px solid var(--am-bd); color: var(--am); }
+.flow-arrow { color: var(--tx3); font-size: 14px; }
+.flow-note { font-size: 10px; color: var(--tx3); }
+
+/* ── NOTE BOX ── */
+.note-box { background: var(--bg2); border-left: 3px solid var(--bd2); padding: 12px 16px; border-radius: 0 var(--r) var(--r) 0; margin-top: 12px; }
+.note-row { font-size: 11px; color: var(--tx2); margin-bottom: 5px; display: flex; gap: 6px; line-height: 1.6; }
+.note-row:last-child { margin-bottom: 0; }
+
+/* ── DIVIDER ── */
+.divider { height: 1px; background: var(--bd); margin: 28px 0; }
+
+/* ── PRINT ── */
+@media print {
+  .page { padding: 20px; }
+  .code-block { background: #F0EEE8; }
+  .code-block pre { color: #1E1C18; }
+  .code-kw { color: #7B4F10; }
+  .code-type { color: #2D6A3F; }
+  .code-str { color: #8B6520; }
+  .code-cm { color: #9A9690; }
+}
+
+@media (max-width: 640px) {
+  .plan-grid { grid-template-columns: 1fr 1fr; }
+  .payg-grid { grid-template-columns: 1fr 1fr; }
+  .wallet-layout { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<div class="page">
+
+<!-- HEADER -->
+<div class="doc-header">
+  <div class="doc-title">物語工房 — 課金・ポイント設計書</div>
+  <div class="doc-meta">
+    <span>作家 / 読者 行動マップ</span>
+    <span>課金ポイント一覧</span>
+    <span>料金体系</span>
+    <span>ウォレット構造</span>
+  </div>
+</div>
+
+
+<!-- ════════════════════
+     1. 行動マップ
+════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="section-num">01</span> 行動マップ（課金・ポイント付与）</div>
+  <!-- 凡例 -->
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px;padding:10px 14px;background:var(--bg2);border-radius:var(--r);border:1px solid var(--bd);">
+    <div style="font-size:10px;color:var(--tx3);font-weight:500;margin-right:4px;align-self:center;">凡例</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);"><div style="width:24px;height:10px;border-radius:3px;background:var(--am-bg);border:1.5px solid var(--am-bd);"></div>有料PTを払う</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);"><div style="width:24px;height:10px;border-radius:3px;background:var(--tl-bg);border:1.5px solid var(--tl-bd);"></div>無料PT優先で払う</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);"><div style="width:24px;height:10px;border-radius:3px;background:var(--gn-bg);border:1.5px dashed var(--gn-bd);"></div>無料PT（行動）をもらう — 作家</div>
+    <div style="display:flex;align-items:center;gap:5px;font-size:10px;color:var(--tx2);"><div style="width:24px;height:10px;border-radius:3px;background:var(--pu-bg);border:1.5px dashed var(--pu-bd);"></div>無料PT（行動）をもらう — 読者</div>
+  </div>
+  <div style="font-size:11px;color:var(--tx3);margin-bottom:16px;">実線カード = ポイントを払う　破線カード = ポイントをもらう</div>
+
+  <div class="jmap">
+  <div class="jmap-inner">
+
+    <!-- Phase header -->
+    <div class="jmap-phase-row">
+      <div></div>
+      <div class="phase-cell"><div class="phase-num">①</div><div class="phase-name">出会い</div><div class="phase-sub">登録</div></div>
+      <div class="phase-cell"><div class="phase-num">②</div><div class="phase-name">始動</div><div class="phase-sub">最初の体験</div></div>
+      <div class="phase-cell"><div class="phase-num">③</div><div class="phase-name">継続</div><div class="phase-sub">習慣化</div></div>
+      <div class="phase-cell"><div class="phase-num">④</div><div class="phase-name">深化</div><div class="phase-sub">本気になる</div></div>
+      <div class="phase-cell"><div class="phase-num">⑤</div><div class="phase-name">収益化</div><div class="phase-sub">稼ぐ・広げる</div></div>
+    </div>
+
+    <!-- WRITER label -->
+    <div style="margin-bottom:8px">
+      <div class="user-label ul-writer" style="max-width:320px">
+        <span class="ul-icon">✍️</span><span class="ul-name">作家</span>
+        <span class="ul-desc">良い作品を作るほど多くもらえる</span>
+      </div>
+    </div>
+
+    <!-- Writer 課金 -->
+    <div class="jmap-grid" style="margin-bottom:6px">
+      <div class="row-label">ポイントを<br>払う</div>
+      <div class="map-cell mc-free"><div class="mc-tag">無料</div></div>
+      <div class="map-cell">
+        <div class="tp tp-pay-free">
+          <div class="tp-title">AIと設計・執筆</div>
+          <div class="tp-sub">無料PT優先で消費</div>
+          <div class="badges"><span class="badge b-pay-free">無料PT優先</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-pay-paid">
+          <div class="tp-title">AIと設計・執筆</div>
+          <div class="tp-sub">月額サブスクで有料PT補充</div>
+          <div class="badges"><span class="badge b-pay-paid">💰 有料PT</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-pay-paid">
+          <div class="tp-title">編集者審査に応募</div>
+          <div class="tp-sub">有料PTのみ消費</div>
+          <div class="badges"><span class="badge b-pay-paid">💰 有料PTのみ</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-pay-paid">
+          <div class="tp-title">コミカライズ申請</div>
+          <div class="tp-sub">有料PTのみ消費</div>
+          <div class="badges"><span class="badge b-pay-paid">💰 有料PTのみ</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Writer 行動PT -->
+    <div class="jmap-grid" style="margin-bottom:20px">
+      <div class="row-label">PT を<br>もらう</div>
+      <div class="map-cell mc-empty"></div>
+      <div class="map-cell">
+        <div class="tp tp-earn-w">
+          <div class="tp-title">作品を投稿する</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT</span></div>
+        </div>
+        <div class="tp tp-earn-w" style="margin-top:5px">
+          <div class="tp-title">連続ログイン</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-earn-w">
+          <div class="tp-title">章を更新する</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT</span></div>
+        </div>
+        <div class="tp tp-earn-w" style="margin-top:5px">
+          <div class="tp-title">連続更新達成</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-earn-w">
+          <div class="tp-title">AIスコア高評価</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT 大</span></div>
+        </div>
+        <div class="tp tp-earn-w" style="margin-top:5px">
+          <div class="tp-title">作品が完結する</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT 大</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-earn-w">
+          <div class="tp-title">友人を招待する</div>
+          <div class="badges"><span class="badge b-earn-w">+ 無料PT 大</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- READER label -->
+    <div style="margin-bottom:8px">
+      <div class="user-label ul-reader" style="max-width:320px">
+        <span class="ul-icon">📖</span><span class="ul-name">読者</span>
+        <span class="ul-desc">推しができた瞬間から課金が始まる</span>
+      </div>
+    </div>
+
+    <!-- Reader 課金 -->
+    <div class="jmap-grid" style="margin-bottom:6px">
+      <div class="row-label">ポイントを<br>払う</div>
+      <div class="map-cell mc-free"><div class="mc-tag">無料で読む</div></div>
+      <div class="map-cell mc-free"><div class="mc-tag">無料で読む</div></div>
+      <div class="map-cell">
+        <div class="tp tp-pay-paid">
+          <div class="tp-title">投げ銭・スパチャ</div>
+          <div class="tp-sub">感謝の衝動</div>
+          <div class="badges"><span class="badge b-pay-paid">💰 有料PTのみ</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-pay-paid">
+          <div class="tp-title">神回・衝撃回の直後</div>
+          <div class="tp-sub">感動のピーク</div>
+          <div class="badges"><span class="badge b-pay-paid">💰 有料PTのみ</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-pay-free">
+          <div class="tp-title">有料話・先読み</div>
+          <div class="tp-sub">無料PT優先で消費</div>
+          <div class="badges"><span class="badge b-pay-free">無料PT優先</span></div>
+        </div>
+        <div class="tp tp-pay-paid" style="margin-top:5px">
+          <div class="tp-title">コミカライズ支援</div>
+          <div class="badges"><span class="badge b-pay-paid">💰 有料PTのみ</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reader 行動PT -->
+    <div class="jmap-grid">
+      <div class="row-label">PT を<br>もらう</div>
+      <div class="map-cell mc-empty"></div>
+      <div class="map-cell mc-empty"></div>
+      <div class="map-cell">
+        <div class="tp tp-earn-r">
+          <div class="tp-title">作品をレビューする</div>
+          <div class="badges"><span class="badge b-earn-r">+ 無料PT</span></div>
+        </div>
+        <div class="tp tp-earn-r" style="margin-top:5px">
+          <div class="tp-title">レビュー経由で閲覧される</div>
+          <div class="badges"><span class="badge b-earn-r">+ 無料PT</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-earn-r">
+          <div class="tp-title">投票・評価する</div>
+          <div class="tp-sub">発掘機能の精度向上</div>
+          <div class="badges"><span class="badge b-earn-r">+ 無料PT</span></div>
+        </div>
+        <div class="tp tp-earn-r" style="margin-top:5px">
+          <div class="tp-title">連続ログイン</div>
+          <div class="badges"><span class="badge b-earn-r">+ 無料PT</span></div>
+        </div>
+      </div>
+      <div class="map-cell">
+        <div class="tp tp-earn-r">
+          <div class="tp-title">友人を招待する</div>
+          <div class="badges"><span class="badge b-earn-r">+ 無料PT 大</span></div>
+        </div>
+        <div class="tp tp-earn-r" style="margin-top:5px">
+          <div class="tp-title">SNSシェアする</div>
+          <div class="badges"><span class="badge b-earn-r">+ 無料PT</span></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════
+     2. 行動PT詳細
+════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="section-num">02</span> 行動ポイント一覧</div>
+
+  <div class="user-block">
+    <div class="user-label ul-writer" style="max-width:280px">
+      <span class="ul-icon">✍️</span><span class="ul-name">作家の行動ポイント</span>
+    </div>
+    <table>
+      <thead><tr><th style="width:34%">行動</th><th style="width:30%">プラットフォームへの貢献</th><th style="width:16%">PT量</th><th style="width:20%">付与頻度</th></tr></thead>
+      <tbody>
+        <tr><td>作品を新規投稿する</td><td>作品数がPFの価値を上げる</td><td><span class="pt-badge pt-mid">中</span></td><td>1作品につき1回</td></tr>
+        <tr><td>章・話を更新する</td><td>連載継続を促す</td><td><span class="pt-badge pt-small">小</span></td><td>更新ごと（1日上限あり）</td></tr>
+        <tr><td>設計図を完成させる</td><td>良質な作品への動機付け</td><td><span class="pt-badge pt-mid">中</span></td><td>1作品につき1回</td></tr>
+        <tr><td>AIスコアが一定以上</td><td>品質への報酬</td><td><span class="pt-badge pt-large">大</span></td><td>スコア達成時</td></tr>
+        <tr><td>作品が完結する</td><td>完走への強いインセンティブ</td><td><span class="pt-badge pt-large">大</span></td><td>1作品につき1回</td></tr>
+        <tr><td>連続更新（7日・30日）</td><td>継続執筆のストリーク報酬</td><td><span class="pt-badge pt-mid">中</span></td><td>達成時ボーナス</td></tr>
+        <tr><td>新規読者がフォローする</td><td>読者を連れてきた報酬</td><td><span class="pt-badge pt-small">小</span></td><td>フォローごと</td></tr>
+        <tr><td>連続ログイン</td><td>プラットフォームへの定着</td><td><span class="pt-badge pt-small">小</span></td><td>毎日（ストリーク）</td></tr>
+        <tr><td>友人を作家として招待</td><td>作家の母数を増やす</td><td><span class="pt-badge pt-large">大</span></td><td>招待成立ごと</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="user-block">
+    <div class="user-label ul-reader" style="max-width:280px">
+      <span class="ul-icon">📖</span><span class="ul-name">読者の行動ポイント</span>
+    </div>
+    <table>
+      <thead><tr><th style="width:34%">行動</th><th style="width:30%">プラットフォームへの貢献</th><th style="width:16%">PT量</th><th style="width:20%">付与頻度</th></tr></thead>
+      <tbody>
+        <tr><td>新規登録（初回ボーナス）</td><td>最初の体験を無料で試す</td><td><span class="pt-badge pt-mid">中</span></td><td>登録時1回のみ</td></tr>
+        <tr><td>作品をレビューする</td><td>作家へのフィードバック</td><td><span class="pt-badge pt-mid">中</span></td><td>1作品につき1回</td></tr>
+        <tr><td>レビュー経由で作品が閲覧される</td><td>良質なレビューへの報酬</td><td><span class="pt-badge pt-small">小〜中</span></td><td>閲覧ごと（上限あり）</td></tr>
+        <tr><td>作品を評価・投票する</td><td>発掘機能の精度向上</td><td><span class="pt-badge pt-small">小</span></td><td>評価ごと（1日上限あり）</td></tr>
+        <tr><td>作家をフォローする</td><td>作家の継続動機になる</td><td><span class="pt-badge pt-small">小</span></td><td>フォローごと</td></tr>
+        <tr><td>連続ログイン</td><td>プラットフォームへの定着</td><td><span class="pt-badge pt-small">小</span></td><td>毎日（ストリーク）</td></tr>
+        <tr><td>友人を読者として招待</td><td>読者の母数を増やす</td><td><span class="pt-badge pt-large">大</span></td><td>招待成立ごと</td></tr>
+        <tr><td>SNSシェアする</td><td>外部からの流入を増やす</td><td><span class="pt-badge pt-small">小</span></td><td>シェアごと（1日上限あり）</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note-box">
+    <div class="note-row"><span>⚠️</span>行動PTは作家への送金・投げ銭には使えない（空循環防止）</div>
+    <div class="note-row"><span>⚠️</span>レビュー経由閲覧PTは自作自演防止のため、自分の作品へのレビューは対象外</div>
+    <div class="note-row"><span>⚠️</span>繰り返し獲得できる行動には1日の上限を設ける</div>
+    <div class="note-row"><span>✓</span>AIスコア・作品完結など品質・完走に関わる行動は特に厚く報酬を与える</div>
+  </div>
+</div>
+
+
+<!-- ════════════════════
+     3. 料金体系
+════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="section-num">03</span> 料金体系</div>
+
+  <div style="margin-bottom:20px">
+    <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:10px;letter-spacing:.04em;">サブスクリプション（毎月払い）</div>
+    <div class="plan-grid">
+      <div class="plan-card">
+        <div class="plan-tier tier-free">FREE</div>
+        <div class="plan-name">無料</div>
+        <div class="plan-price">¥0 <span>/ 月</span></div>
+        <div class="plan-pt">日次PT付与なし<div class="reset">行動PTのみ利用可</div></div>
+        <div class="plan-feat"><span class="ok">✓</span>作品投稿・閲覧</div>
+        <div class="plan-feat"><span class="ok">✓</span>行動PTでAI対話（少量）</div>
+        <div class="plan-feat"><span class="ng">–</span>毎日PT付与なし</div>
+        <div class="plan-feat"><span class="ng">–</span>審査・コミカライズ不可</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-tier tier-light">LIGHT</div>
+        <div class="plan-name">ライト</div>
+        <div class="plan-price">¥480 <span>/ 月</span></div>
+        <div class="plan-pt"><strong>30 PT / 日</strong>（日次リセット）<div class="reset">翌日繰越なし・月換算 約900PT</div></div>
+        <div class="plan-feat"><span class="ok">✓</span>毎日30PT付与</div>
+        <div class="plan-feat"><span class="ok">✓</span>AI設計・執筆対話</div>
+        <div class="plan-feat"><span class="ok">✓</span>有料話購入</div>
+        <div class="plan-feat"><span class="ng">–</span>審査・コミカライズ不可</div>
+      </div>
+      <div class="plan-card highlight">
+        <div class="plan-tier tier-std">STANDARD</div>
+        <div class="plan-name">スタンダード</div>
+        <div class="plan-price">¥980 <span>/ 月</span></div>
+        <div class="plan-pt"><strong>80 PT / 日</strong>（日次リセット）<div class="reset">翌日繰越なし・月換算 約2,400PT</div></div>
+        <div class="plan-feat"><span class="ok">✓</span>毎日80PT付与</div>
+        <div class="plan-feat"><span class="ok">✓</span>AI設計・執筆対話</div>
+        <div class="plan-feat"><span class="ok">✓</span>有料話購入</div>
+        <div class="plan-feat"><span class="ok">✓</span>編集者審査に応募可</div>
+        <div class="plan-feat"><span class="ng">–</span>コミカライズ不可</div>
+      </div>
+      <div class="plan-card">
+        <div class="plan-tier tier-pro">PRO</div>
+        <div class="plan-name">プロ</div>
+        <div class="plan-price">¥1,980 <span>/ 月</span></div>
+        <div class="plan-pt"><strong>200 PT / 日</strong>（日次リセット）<div class="reset">翌日繰越なし・月換算 約6,000PT</div></div>
+        <div class="plan-feat"><span class="ok">✓</span>毎日200PT付与</div>
+        <div class="plan-feat"><span class="ok">✓</span>AI設計・執筆（無制限相当）</div>
+        <div class="plan-feat"><span class="ok">✓</span>有料話購入</div>
+        <div class="plan-feat"><span class="ok">✓</span>編集者審査に応募可</div>
+        <div class="plan-feat"><span class="ok">✓</span>コミカライズ申請可</div>
+      </div>
+    </div>
+  </div>
+
+  <div>
+    <div style="font-size:12px;font-weight:500;color:var(--tx2);margin-bottom:10px;letter-spacing:.04em;">従量課金（ポイント単品購入）</div>
+    <div class="payg-grid">
+      <div class="payg-item"><div class="payg-pt">100 <span>PT</span></div><div class="payg-price">¥120</div><div class="payg-bonus">お試し</div></div>
+      <div class="payg-item"><div class="payg-pt">500 <span>PT</span></div><div class="payg-price">¥500</div><div class="payg-bonus">+50PT ボーナス</div></div>
+      <div class="payg-item"><div class="payg-pt">1,500 <span>PT</span></div><div class="payg-price">¥1,200</div><div class="payg-bonus">+300PT ボーナス</div></div>
+      <div class="payg-item"><div class="payg-pt">5,000 <span>PT</span></div><div class="payg-price">¥3,500</div><div class="payg-bonus">+1,000PT ボーナス</div></div>
+    </div>
+    <div class="note-box" style="margin-top:10px">
+      <div class="note-row"><span>📌</span>価格・PT数はAPIコストから逆算して最終調整する</div>
+      <div class="note-row"><span>📌</span>日次リセット：毎日0時にPT付与。使い切れなかった分は消滅。毎日使うほどお得な設計</div>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════
+     4. ポイントの流れ
+════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="section-num">04</span> ポイントの流れ</div>
+  <div class="flow-box">
+    <div class="flow-row">
+      <div class="flow-block fb-r">読者がPT購入</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-block fb-r">作家に送金</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-block fb-w">作家に 80% 還元</div>
+      <span class="flow-arrow">+</span>
+      <div class="flow-block fb-p">PF が 20% 受け取り</div>
+    </div>
+    <div class="flow-row">
+      <div class="flow-block fb-r">作家・読者がPT購入（従量 / サブスク）</div>
+      <span class="flow-arrow">→</span>
+      <div class="flow-block fb-p">PF が 100% 受け取り</div>
+      <span class="flow-note">← 主要収益源</span>
+    </div>
+  </div>
+</div>
+
+
+<!-- ════════════════════
+     5. ウォレット構造
+════════════════════ -->
+<div class="section">
+  <div class="section-title"><span class="section-num">05</span> ウォレット構造（2テーブル）</div>
+
+  <!-- PT種別カード -->
+  <div class="wallet-layout">
+    <div class="wallet-card paid">
+      <div class="wc-title">💰 購入ポイント</div>
+      <div style="font-size:10px;font-family:var(--font-mono);color:var(--am);margin-bottom:10px;">paid_points</div>
+      <div class="wc-row"><span class="wc-ok">✓</span>課金して取得</div>
+      <div class="wc-row"><span class="wc-ok">✓</span>すべての機能に使える</div>
+      <div class="wc-row"><span class="wc-ok">✓</span>作家への送金・投げ銭に使える</div>
+      <div class="wc-row"><span class="wc-ng">✗</span>現金化はできない</div>
+    </div>
+    <div class="wallet-card free">
+      <div class="wc-title">🎯 行動ポイント</div>
+      <div style="font-size:10px;font-family:var(--font-mono);color:var(--gn);margin-bottom:10px;">free_points</div>
+      <div class="wc-row"><span class="wc-ok">✓</span>行動報酬で取得</div>
+      <div class="wc-row"><span class="wc-ok">✓</span>AI対話・有料話の購入に使える</div>
+      <div class="wc-row"><span class="wc-ng">✗</span>作家への送金・投げ銭には使えない</div>
+      <div class="wc-row"><span class="wc-ng">✗</span>現金化はできない</div>
+    </div>
+  </div>
+
+  <!-- 消費優先順位 -->
+  <div class="note-box" style="margin-bottom:24px;">
+    <div class="note-row"><span>📌</span>ポイントは <strong>行動ポイント → 購入ポイント</strong> の順で使われます。購入ポイントをあとに残すことで、課金した価値を感じやすくします。</div>
+  </div>
+
+  <!-- TABLE SCHEMA VISUAL (div-based, no table tag) -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:12px;">
+
+    <!-- wallets -->
+    <div style="border-radius:var(--rl);overflow:hidden;border:1.5px solid var(--am-bd);">
+      <div style="background:var(--am-bg);border-bottom:1.5px solid var(--am-bd);padding:10px 14px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;font-weight:500;color:var(--am);font-family:var(--font-mono);">wallets</span>
+        <span style="font-size:10px;color:var(--tx3);margin-left:auto;">ユーザーごとに1件の情報を持つテーブル</span>
+      </div>
+      <div style="display:grid;grid-template-columns:38% 22% 1fr;background:var(--bg2);border-bottom:1px solid var(--bd);">
+        <div style="padding:7px 12px;font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.04em;">項目名</div>
+        <div style="padding:7px 12px;font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.04em;">データ型</div>
+        <div style="padding:7px 12px;font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.04em;">内容</div>
+      </div>
+      <div style="display:grid;grid-template-columns:38% 22% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);color:var(--am);">id</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">uuid / PK</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">このウォレット情報を識別するためのID</div>
+      </div>
+      <div style="display:grid;grid-template-columns:38% 22% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">user_id</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">uuid / FK</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">どのユーザーのウォレットかを示すID（users.id を参照）</div>
+      </div>
+      <div style="display:grid;grid-template-columns:38% 22% 1fr;border-bottom:1px solid var(--bd);background:var(--am-bg);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);color:var(--am);">paid_points</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">int</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">購入したポイントの残高</div>
+      </div>
+      <div style="display:grid;grid-template-columns:38% 22% 1fr;border-bottom:1px solid var(--bd);background:var(--gn-bg);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);color:var(--gn);">free_points</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">int</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">行動によって獲得したポイントの残高</div>
+      </div>
+      <div style="display:grid;grid-template-columns:38% 22% 1fr;">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">updated_at</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">timestamptz</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">この情報が最後に更新された日時</div>
+      </div>
+      <div style="padding:8px 12px;background:var(--bg2);border-top:1px solid var(--bd);font-size:10px;color:var(--tx3);">🔒 ログイン中の本人だけが自分のデータを見られる設定（RLS）</div>
+    </div>
+
+    <!-- point_transactions -->
+    <div style="border-radius:var(--rl);overflow:hidden;border:1.5px solid var(--pu-bd);">
+      <div style="background:var(--pu-bg);border-bottom:1.5px solid var(--pu-bd);padding:10px 14px;display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;font-weight:500;color:var(--pu);font-family:var(--font-mono);">point_transactions</span>
+        <span style="font-size:10px;color:var(--tx3);margin-left:auto;">ポイントの増減履歴を記録するテーブル</span>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;background:var(--bg2);border-bottom:1px solid var(--bd);">
+        <div style="padding:7px 12px;font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.04em;">項目名</div>
+        <div style="padding:7px 12px;font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.04em;">データ型</div>
+        <div style="padding:7px 12px;font-size:10px;font-weight:500;color:var(--tx3);letter-spacing:.04em;">内容</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);color:var(--pu);">id</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">uuid / PK</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">この取引履歴を識別するためのID</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">user_id</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">uuid / FK</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">どのユーザーの取引かを示すID（users.id を参照）</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">type</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">text</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">取引の種類（例：行動で獲得、購入で獲得、消費、送金）</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);background:var(--am-bg);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);color:var(--am);">point_kind</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">text</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">どちらのポイントか（購入ポイント / 行動ポイント）</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">amount</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">int</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">ポイントの増減量（プラスは獲得、マイナスは消費）</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">reason</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">text</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">増減した理由（例：レビュー、投稿、AI対話など）</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;border-bottom:1px solid var(--bd);">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">ref_id</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">uuid</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">関連する作品やレビューなどのID</div>
+      </div>
+      <div style="display:grid;grid-template-columns:30% 18% 1fr;">
+        <div style="padding:8px 12px;font-size:11px;font-family:var(--font-mono);">created_at</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx3);">timestamptz</div>
+        <div style="padding:8px 12px;font-size:11px;color:var(--tx2);">この取引が記録された日時</div>
+      </div>
+      <div style="padding:8px 12px;background:var(--bg2);border-top:1px solid var(--bd);font-size:10px;color:var(--tx3);">🔒 ログイン中の本人だけが自分の履歴を見られる設定（RLS）</div>
+    </div>
+
+  </div>
+
+  <!-- 関係性 -->
+  <div style="background:var(--bg2);border:1px solid var(--bd);border-radius:var(--r);padding:12px 16px;display:flex;align-items:center;gap:12px;font-size:11px;color:var(--tx2);">
+    <span style="font-family:var(--font-mono);color:var(--am);">wallets</span>
+    <span style="color:var(--tx3);">1 ─── ∞</span>
+    <span style="font-family:var(--font-mono);color:var(--pu);">point_transactions</span>
+    <span style="color:var(--tx3);margin-left:8px;">1つのウォレットに対して、複数の取引履歴がひもづきます</span>
+  </div>
+</div>
+
+</div>
+</body>
+</html>
